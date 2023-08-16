@@ -1,19 +1,19 @@
 [tool.poetry]
-name = "pai"
+name = "pai-repl"
 version = "0.1.0"
-description = "An AI enabled Python REPL"
+description = "Python REPL with LLM integration"
 authors = ["Alex Wiles <xwiles@gmail.com>"]
 readme = "README.md"
+packages = [{ include = "pai", from = "./src" }]
 
 [tool.poetry.scripts]
 pai = "pai.cli:main"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.6"
 pydantic = "2.1.1"
 openai = "0.27.8"
 prompt_toolkit = "3.0.39"
-
 
 [build-system]
 requires = ["poetry-core"]
