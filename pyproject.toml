@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "pai"
+version = "0.1.0"
+description = "An AI enabled Python REPL"
+authors = ["Alex Wiles <xwiles@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+pai = "pai.cli:main"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pydantic = "2.1.1"
+openai = "0.27.8"
+prompt_toolkit = "3.0.39"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
