@@ -1,8 +1,13 @@
-from typing import Generator
+import sys
+import threading
+import time
+from typing import Generator, Tuple
 
-from prompt_toolkit import PromptSession
+from prompt_toolkit import HTML, PromptSession, print_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
+from prompt_toolkit.styles import Style
+
 
 from pai.console import (
     Console,
@@ -13,6 +18,40 @@ from pai.console import (
     UserInput,
 )
 from pai.llms.llm import LLMError, LLMResponseCode, LLMResponseMessage
+
+
+def spinner_generator() -> Generator[str, None, None]:
+    """Generate spinner frames."""
+    while True:
+        yield "| Generating response..."
+        yield "/ Generating response..."
+        yield "- Generating response..."
+        yield "\\ Generating response..."
+
+
+def spinner_animation(event: threading.Event):
+    """Spinner animation function to be run in a separate thread."""
+    spinner = spinner_generator()
+    while not event.is_set():
+        print(next(spinner), end="\r", flush=True)
+        time.sleep(0.1)
+    print(" " * 2, end="\r", flush=True)  # Clear the spinner
+
+
+class Animation:
+    """Context manager for spinner animation."""
+
+    def __enter__(self):
+        self.stop_event = threading.Event()
+        self.spinner_thread = threading.Thread(
+            target=spinner_animation, args=(self.stop_event,)
+        )
+        self.spinner_thread.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.stop_event.set()
+        self.spinner_thread.join()
 
 
 # Create a session object
@@ -35,6 +74,16 @@ def _(event):
     event.current_buffer.validate_and_handle()
 
 
+prompt_style = Style.from_dict(
+    {
+        "inp": "bold",
+        "gen": "bold",
+        "multi": "bold",
+        "out": "bold",
+    }
+)
+
+
 class REPL:
     console: Console
     session: PromptSession
@@ -47,70 +96,76 @@ class REPL:
         self.multiline = False
         self.buffered_lines = []
 
-    def input_generator(
-        self,
-    ) -> Generator[ConsoleInput, None, None]:
-        while True:
-            prompt = "... " if self.console.more_input_required else f">>> "
-
-            # get the next line from the user
-            line: str = self.session.prompt(
-                prompt,
-            )
-
-            # handle the please command
-            if line.startswith("ai:"):
-                line = line[3:]  # remove the "please " prefix
-                resp = self.console.gen_code(line)  # generate code
-
-                if isinstance(resp, LLMResponseCode):
-                    # print the message of the response
-                    if resp.message:
-                        print("-" * 40)
-                        print(resp.message)
-                        print("-" * 40)
-
-                    # prompt the user to edit the generated code code
-                    edited = self.session.prompt(
-                        "",
-                        default=resp.code,
-                    )
-                    yield LLMCodeInput(
-                        message=resp.message,
-                        prompt=resp.prompt,
-                        code=edited,
-                        raw_resp=resp.raw,
-                    )
-                elif isinstance(resp, LLMResponseMessage):
-                    yield LLMMessageInput(
-                        prompt=resp.prompt, message=resp.message, raw_resp=resp.raw
-                    )
-                elif isinstance(resp, LLMError):
-                    yield LLMErrorInput(
-                        prompt=resp.prompt, error=resp.error, raw_resp=resp.raw
-                    )
-                continue
-
-            # handle the history command
-            if line.startswith("history"):
-                nodes = self.console.history_tree.lineage()
-                for node in nodes:
-                    print(f"[{node.depth}]: {node.data}")
-                continue
-
-            # if we are here, assume the line is user code
-            yield UserInput(line)
-
     def go(self):
-        inputs = self.input_generator()
-        for line in inputs:
+        while True:
             try:
-                resp = self.console.handle_line(line)
-                if resp is not None:
+                current_index = self.console.history_tree.current_position().depth
+                inp_prompt = HTML(
+                    f"<inp>Inp [{current_index}]> </inp>"
+                )  # [("class:inp", f"Inp [{current_index}]> ")]
+                gen_prompt = HTML(f"<gen>Gen [{current_index}]> </gen>")
+                multi_prompt = [("class:multi", "    ...> ")]
+
+                # get the next line from the user
+                prompt = (
+                    multi_prompt if self.console.more_input_required else inp_prompt
+                )
+                line: str = self.session.prompt(prompt, style=prompt_style)
+
+                line_input = UserInput(line)
+                # handle the please command
+                if line.startswith("ai:"):
+                    line = line[3:]  # remove the "please " prefix
+
+                    with Animation():
+                        resp = self.console.gen_code(line)
+
+                    if isinstance(resp, LLMResponseCode):
+                        # print the message of the response
+                        if resp.message:
+                            print(" message ".center(40, "-"))
+                            print(resp.message)
+                            print("-" * 40)
+
+                        # prompt the user to edit the generated code code
+                        edited = self.session.prompt(
+                            gen_prompt,
+                            default=resp.code,
+                        )
+                        line_input = LLMCodeInput(
+                            message=resp.message,
+                            prompt=resp.prompt,
+                            code=edited,
+                            raw_resp=resp.raw,
+                        )
+                    elif isinstance(resp, LLMResponseMessage):
+                        line_input = LLMMessageInput(
+                            prompt=resp.prompt, message=resp.message, raw_resp=resp.raw
+                        )
+                    elif isinstance(resp, LLMError):
+                        line_input = LLMErrorInput(
+                            prompt=resp.prompt, error=resp.error, raw_resp=resp.raw
+                        )
+                # handle the history command
+                if line.startswith("history"):
+                    nodes = self.console.history_tree.lineage()
+                    for node in nodes:
+                        print(f"[{node.depth}]: {node.data}")
+                    continue
+
+                resp = self.console.handle_line(line_input)
+                if resp:
+                    out = HTML(f"<out>Out [{current_index}]></out> ")
+                    print_formatted_text(out, style=prompt_style, end="")
                     print(resp, end="")
-            except KeyboardInterrupt:
+
+            except KeyboardInterrupt as e:
                 # Handle Ctrl+C and reset the lines
                 self.multiline = False
+                string_error = str(e)
+                if string_error:
+                    print(string_error)
+                continue
             except EOFError:
                 # Handle Ctrl+D (exit)
                 print("\nGoodbye!")
