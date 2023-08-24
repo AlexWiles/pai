@@ -64,8 +64,10 @@ def _(event):
     event.cli.current_buffer.insert_text("    ")
 
 
-@key_bindings.add("c-m")
+@key_bindings.add("escape", "enter")
+@key_bindings.add("c-o")
 def _(event):
+    "Bind meta+enter or esc+enter to insert a newline."
     event.current_buffer.insert_text("\n")
 
 
@@ -100,17 +102,20 @@ class REPL:
         while True:
             try:
                 current_index = self.console.history_tree.current_position().depth
-                inp_prompt = HTML(
-                    f"<inp>Inp [{current_index}]> </inp>"
-                )  # [("class:inp", f"Inp [{current_index}]> ")]
+
+                inp_prompt = HTML(f"<inp>Inp [{current_index}]> </inp>")
                 gen_prompt = HTML(f"<gen>Gen [{current_index}]> </gen>")
-                multi_prompt = [("class:multi", "    ...> ")]
+
+                ellipsis = "." * (2 + len(str(current_index)))
+                multi_prompt = HTML(f"<multi>    {ellipsis}> </multi>")
 
                 # get the next line from the user
                 prompt = (
                     multi_prompt if self.console.more_input_required else inp_prompt
                 )
-                line: str = self.session.prompt(prompt, style=prompt_style)
+                line: str = self.session.prompt(
+                    prompt, prompt_continuation=multi_prompt, style=prompt_style
+                )
 
                 line_input = UserInput(line)
                 # handle the please command
@@ -123,9 +128,7 @@ class REPL:
                     if isinstance(resp, LLMResponseCode):
                         # print the message of the response
                         if resp.message:
-                            print(" message ".center(40, "-"))
                             print(resp.message)
-                            print("-" * 40)
 
                         # prompt the user to edit the generated code code
                         edited = self.session.prompt(

@@ -1,3 +1,4 @@
+import ast
 import code
 import io
 import sys
@@ -38,26 +39,40 @@ class LLMErrorInput:
 ConsoleInput = UserInput | LLMCodeInput | LLMMessageInput | LLMErrorInput
 
 
+class CustomInteractiveConsole(code.InteractiveConsole):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.last_exception = None
+
+    def showtraceback(self, *args, **kwargs):
+        """Override the default traceback behavior to store the last exception."""
+        self.last_exception = sys.exc_info()[1]
+
+
 class Console:
-    console: code.InteractiveConsole
+    console: CustomInteractiveConsole
     history_tree: HistoryTree
     llm: LLM
-    buffered_lines: list[str]
+    buffered_code: list[str]
     more_input_required: bool
 
     def __init__(self, llm: LLM):
-        self.console = code.InteractiveConsole()
+        self.console = CustomInteractiveConsole()
         self.history_tree = HistoryTree()
         self.llm = llm
 
-        self.buffered_lines = []
+        self.buffered_code = []
         self.more_input_required = False
 
-    def gen_code(self, prompt: str) -> LLMResponse:
-        """Generate code using the LLM."""
-        return self.llm.call(self.history_tree.lineage(), prompt)
+    def is_expression(self, code: str) -> bool:
+        """Check if the given code is an expression."""
+        try:
+            ast.parse(code, mode="eval")
+            return True
+        except:
+            return False
 
-    def push_line(self, source: str) -> tuple[bool, str]:
+    def push_line(self, source: str) -> tuple:
         """Push a line of code to the Console. Return a tuple of (more_input_required, output)"""
         collector = io.StringIO()
         original_stdout = sys.stdout
@@ -65,23 +80,67 @@ class Console:
         sys.stdout = collector
         sys.stderr = collector
 
-        # split the source into lines and push them one by one
-        # ''.splitlines() returns [] but we still want to push an empty line so we have the or [""] part
-        more_input_required = False
-        for line in source.splitlines() or [""]:
-            # if more input was required from the previous line and the current line doesn't start with a space, then we need to push an empty line
-            if more_input_required and not line.startswith(" "):
-                self.console.push("")
-            more_input_required = self.console.push(line) == 1
+        self.buffered_code.append(source)
+        full_code = "\n".join(self.buffered_code)
 
-        # Restore original stdout and stderr
+        all_lines = full_code.strip().split("\n")
+        last_line = all_lines[-1]
+
+        # If the last line of the full_code is an expression, evaluate it after executing the rest
+        if self.is_expression(last_line):
+            # Execute all lines except the last one
+            exec_code = "\n".join(all_lines[:-1])
+            try:
+                compiled_code = compile(exec_code, "<string>", "exec")
+                self.console.runcode(compiled_code)
+                # self.console.runsource(exec_code)
+                if self.console.last_exception:
+                    error_message = str(self.console.last_exception)
+                    sys.stdout = original_stdout
+                    sys.stderr = original_stderr
+                    self.buffered_code.clear()
+                    self.console.last_exception = None
+                    return (False, error_message + "\n")
+
+                # Handle the last line
+                self.console.push(last_line)
+                self.buffered_code.clear()
+            except Exception as e:
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
+                self.buffered_code.clear()
+                return (False, str(e))
+        else:
+            # If the last line is not an expression, try to compile and execute the full_code
+            try:
+                compiled_code = compile(full_code, "<string>", "exec")
+                self.console.runcode(compiled_code)
+                if self.console.last_exception:
+                    error_message = str(self.console.last_exception)
+                    sys.stdout = original_stdout
+                    sys.stderr = original_stderr
+                    self.buffered_code.clear()
+                    self.console.last_exception = None
+                    return (False, error_message)
+                self.buffered_code.clear()
+            except SyntaxError as e:
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
+                if "unexpected EOF while parsing" in str(e):
+                    # Code block is not complete, more input required
+                    return (True, "")
+                else:
+                    self.buffered_code.clear()
+                    return (False, f"SyntaxError: {e}")
+
         sys.stdout = original_stdout
         sys.stderr = original_stderr
 
-        # Get the redirected stdout and stderr
-        # and store them into the `output` variable
         output = collector.getvalue()
-        return (more_input_required, output)
+        return (
+            False,
+            output,
+        )  # Since we're handling the full code including the last line, more_input_required is always False.
 
     def handle_line(self, line: ConsoleInput) -> Optional[str]:
         if isinstance(line, (UserInput, LLMCodeInput)):
@@ -92,15 +151,15 @@ class Console:
                 self.more_input_required = False
 
             if self.more_input_required:
-                self.buffered_lines.append(line.code)
+                self.buffered_code.append(line.code)
                 self.more_input_required = True
                 return None
             else:
                 code = ""
-                if len(self.buffered_lines) > 0:
-                    code = "\n".join(self.buffered_lines) + "\n"
+                if len(self.buffered_code) > 0:
+                    code = "\n".join(self.buffered_code) + "\n"
                 code += line.code
-                self.buffered_lines = []
+                self.buffered_code = []
                 self.more_input_required = False
 
                 if isinstance(line, UserInput):
@@ -134,6 +193,10 @@ class Console:
             )
 
             return append_new_line(line.error)
+
+    def gen_code(self, prompt: str) -> LLMResponse:
+        """Generate code using the LLM."""
+        return self.llm.call(self.history_tree.lineage(), prompt)
 
 
 def append_new_line(text: str) -> str:
