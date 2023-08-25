@@ -110,11 +110,10 @@ class REPL:
                 multi_prompt = HTML(f"<multi>    {ellipsis}> </multi>")
 
                 # get the next line from the user
-                prompt = (
-                    multi_prompt if self.console.more_input_required else inp_prompt
-                )
                 line: str = self.session.prompt(
-                    prompt, prompt_continuation=multi_prompt, style=prompt_style
+                    inp_prompt,
+                    prompt_continuation=multi_prompt,
+                    style=prompt_style,
                 )
 
                 line_input = UserInput(line)

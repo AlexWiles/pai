@@ -47,22 +47,18 @@ class CustomInteractiveConsole(code.InteractiveConsole):
     def showtraceback(self, *args, **kwargs):
         """Override the default traceback behavior to store the last exception."""
         self.last_exception = sys.exc_info()[1]
+        super().showtraceback(*args, **kwargs)
 
 
 class Console:
     console: CustomInteractiveConsole
     history_tree: HistoryTree
     llm: LLM
-    buffered_code: list[str]
-    more_input_required: bool
 
     def __init__(self, llm: LLM):
         self.console = CustomInteractiveConsole()
         self.history_tree = HistoryTree()
         self.llm = llm
-
-        self.buffered_code = []
-        self.more_input_required = False
 
     def is_expression(self, code: str) -> bool:
         """Check if the given code is an expression."""
@@ -72,7 +68,7 @@ class Console:
         except:
             return False
 
-    def push_line(self, source: str) -> tuple:
+    def push_line(self, source: str) -> str:
         """Push a line of code to the Console. Return a tuple of (more_input_required, output)"""
         collector = io.StringIO()
         original_stdout = sys.stdout
@@ -80,10 +76,7 @@ class Console:
         sys.stdout = collector
         sys.stderr = collector
 
-        self.buffered_code.append(source)
-        full_code = "\n".join(self.buffered_code)
-
-        all_lines = full_code.strip().split("\n")
+        all_lines = source.strip().split("\n")
         last_line = all_lines[-1]
 
         # If the last line of the full_code is an expression, evaluate it after executing the rest
@@ -93,90 +86,61 @@ class Console:
             try:
                 compiled_code = compile(exec_code, "<string>", "exec")
                 self.console.runcode(compiled_code)
-                # self.console.runsource(exec_code)
-                if self.console.last_exception:
-                    error_message = str(self.console.last_exception)
-                    sys.stdout = original_stdout
-                    sys.stderr = original_stderr
-                    self.buffered_code.clear()
-                    self.console.last_exception = None
-                    return (False, error_message + "\n")
 
-                # Handle the last line
-                self.console.push(last_line)
-                self.buffered_code.clear()
+                # if there was not exception, then we can evaluate the last line
+                if not self.console.last_exception:
+                    self.console.push(last_line)
             except Exception as e:
+                # handle an error compiling the exec_code
                 sys.stdout = original_stdout
                 sys.stderr = original_stderr
-                self.buffered_code.clear()
-                return (False, str(e))
+                return f"{e}"
         else:
             # If the last line is not an expression, try to compile and execute the full_code
             try:
-                compiled_code = compile(full_code, "<string>", "exec")
+                compiled_code = compile(source, "<string>", "exec")
                 self.console.runcode(compiled_code)
-                if self.console.last_exception:
-                    error_message = str(self.console.last_exception)
-                    sys.stdout = original_stdout
-                    sys.stderr = original_stderr
-                    self.buffered_code.clear()
-                    self.console.last_exception = None
-                    return (False, error_message)
-                self.buffered_code.clear()
             except SyntaxError as e:
                 sys.stdout = original_stdout
                 sys.stderr = original_stderr
-                if "unexpected EOF while parsing" in str(e):
-                    # Code block is not complete, more input required
-                    return (True, "")
-                else:
-                    self.buffered_code.clear()
-                    return (False, f"SyntaxError: {e}")
+                return f"{e}\n"
 
+        # clear the last exception
+        self.console.last_exception = None
+
+        # restore stdout and stderr
         sys.stdout = original_stdout
         sys.stderr = original_stderr
 
+        # get the output from the collector
         output = collector.getvalue()
-        return (
-            False,
-            output,
-        )  # Since we're handling the full code including the last line, more_input_required is always False.
+        return output
 
     def handle_line(self, line: ConsoleInput) -> Optional[str]:
         if isinstance(line, (UserInput, LLMCodeInput)):
-            (self.more_input_required, out) = self.push_line(line.code)
-
-            # Empty line means end of statement in multiline mode
-            if line.code == "" and self.more_input_required:
-                self.more_input_required = False
-
-            if self.more_input_required:
-                self.buffered_code.append(line.code)
-                self.more_input_required = True
+            # check if the line is empty
+            if line.code.strip() == "":
                 return None
+
+            # push the line to the console
+            out = self.push_line(line.code)
+
+            # add the new node to the history tree
+            if isinstance(line, UserInput):
+                self.history_tree.add_node(
+                    HistoryNode.UserCode(code=line.code, result=out)
+                )
             else:
-                code = ""
-                if len(self.buffered_code) > 0:
-                    code = "\n".join(self.buffered_code) + "\n"
-                code += line.code
-                self.buffered_code = []
-                self.more_input_required = False
-
-                if isinstance(line, UserInput):
-                    self.history_tree.add_node(
-                        HistoryNode.UserCode(code=code, result=out)
+                self.history_tree.add_node(
+                    HistoryNode.LLMCode(
+                        prompt=line.prompt,
+                        code=line.code,
+                        result=out,
+                        raw_resp=line.raw_resp,
                     )
-                else:
-                    self.history_tree.add_node(
-                        HistoryNode.LLMCode(
-                            prompt=line.prompt,
-                            code=line.code,
-                            result=out,
-                            raw_resp=line.raw_resp,
-                        )
-                    )
+                )
 
-                return out
+            return out
         elif isinstance(line, LLMMessageInput):
             self.history_tree.add_node(
                 HistoryNode.LLMMessage(
@@ -184,15 +148,16 @@ class Console:
                 )
             )
             # add new line to the end of the message if it doesn't already have one
-            return append_new_line(line.message)
+            out = append_new_line(line.message)
+            return out
         elif isinstance(line, LLMErrorInput):
             self.history_tree.add_node(
                 HistoryNode.LLMError(
                     prompt=line.prompt, error=line.error, raw_resp=line.raw_resp
                 )
             )
-
-            return append_new_line(line.error)
+            out = append_new_line(line.error)
+            return out
 
     def gen_code(self, prompt: str) -> LLMResponse:
         """Generate code using the LLM."""
