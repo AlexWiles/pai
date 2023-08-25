@@ -16,7 +16,7 @@ def parse_args():
     )
     parser.add_argument(
         "--llm-context-history",
-        help="How many history nodes to send to the llm. Defaults to all of them.",
+        help="How many history nodes to send to the llm as context. Defaults to all of them.",
         type=int,
         default=None,
     )

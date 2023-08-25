@@ -17,7 +17,7 @@ class ChatGPT(LLM):
         messages = [
             {
                 "role": "system",
-                "content": "You are a Python programmer executing code in a REPL with full internet and file system access.",
+                "content": "You are a principal Python engineer executing code in a REPL context with full internet and file system access. Do not redefine variables or functions that are already defined.",
             },
         ]
 
