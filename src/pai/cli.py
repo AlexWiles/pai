@@ -14,6 +14,12 @@ def parse_args():
         choices=["gpt-3.5-turbo", "gpt-4", "fake"],
         default="gpt-4",
     )
+    parser.add_argument(
+        "--llm-context-history",
+        help="How many history nodes to send to the llm. Defaults to all of them.",
+        type=int,
+        default=None,
+    )
     return parser.parse_args()
 
 
@@ -27,7 +33,7 @@ def main():
     else:
         raise ValueError(f"Invalid llm: {args.llm}")
 
-    console = Console(llm)
+    console = Console(llm, llm_context_nodes=args.llm_context_history)
     repl = REPL(console)
     repl.go()
 

@@ -54,11 +54,13 @@ class Console:
     console: CustomInteractiveConsole
     history_tree: HistoryTree
     llm: LLM
+    max_history_nodes_for_llm_context: Optional[int]
 
-    def __init__(self, llm: LLM):
+    def __init__(self, llm: LLM, llm_context_nodes: Optional[int] = None):
         self.console = CustomInteractiveConsole()
         self.history_tree = HistoryTree()
         self.llm = llm
+        self.max_history_nodes_for_llm_context = llm_context_nodes
 
     def is_expression(self, code: str) -> bool:
         """Check if the given code is an expression."""
@@ -161,7 +163,10 @@ class Console:
 
     def gen_code(self, prompt: str) -> LLMResponse:
         """Generate code using the LLM."""
-        return self.llm.call(self.history_tree.lineage(), prompt)
+        history = self.history_tree.lineage(
+            max_nodes=self.max_history_nodes_for_llm_context
+        )
+        return self.llm.call(history, prompt)
 
 
 def append_new_line(text: str) -> str:

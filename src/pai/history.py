@@ -79,15 +79,18 @@ class HistoryTree:
         """Get the current node the cursor is pointing to."""
         return self.cursor
 
-    def lineage(self) -> list[HistoryNode]:
+    def lineage(self, max_nodes: Optional[int] = None) -> list[HistoryNode]:
         """Get the lineage of the current node starting from the root."""
         lineage = []
         node = self.cursor
-        while node:
+        while node and (max_nodes is None or len(lineage) < max_nodes):
             lineage.append(node)
             node = node.parent
-        # remove the root node
-        lineage.pop()
+
+        # remove the last node if it is the root node
+        if lineage[-1] and isinstance(lineage[-1].data, HistoryNode.Root):
+            lineage.pop()
+
         # reverse the list so that the root is first
         lineage.reverse()
         return lineage

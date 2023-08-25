@@ -119,7 +119,8 @@ class REPL:
                 line_input = UserInput(line)
                 # handle the please command
                 if line.startswith("ai:"):
-                    line = line[3:]  # remove the "please " prefix
+                    # remove the "ai:" prefix
+                    line = line[3:]
 
                     with Animation():
                         resp = self.console.gen_code(line)
@@ -133,6 +134,8 @@ class REPL:
                         edited = self.session.prompt(
                             gen_prompt,
                             default=resp.code,
+                            prompt_continuation=multi_prompt,
+                            style=prompt_style,
                         )
                         line_input = LLMCodeInput(
                             message=resp.message,
