@@ -22,7 +22,7 @@ def parse_args():
         default=None,
     )
     group.add_argument(
-        "--chat-gpt",
+        "--openai",
         help="Use ChatGPT as the llm with the given model. Requires OPENAI_API_KEY in the environment.",
         choices=["gpt-3.5-turbo", "gpt-4"],
         default="gpt-4",
@@ -57,8 +57,9 @@ def main():
         llm = LlamaCpp(args.llama_cpp)
     elif args.fake_llm:
         llm = FakeLLM()
-    elif args.chat_gpt:
-        llm = ChatGPT(args.chat_gpt)
+    elif args.openai:
+        # openai has a default, so we check last
+        llm = ChatGPT(args.openai)
     else:
         raise ValueError(f"Must specify an LLM")
 
