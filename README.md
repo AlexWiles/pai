@@ -1,14 +1,17 @@
 # pai: A Python REPL with built in LLM support
 
-- Promp the LLM by inputting `ai: <prompt>`. Pai will use the REPL history as context and generate code.
-- Review, modify, and confirm all generated code prior to execution.
-- Operates natively on your system, providing unrestricted access to both disk and network resources.
+## Features
+- Supports ChatGPT and LlamaCpp
+- Generate code in the REPL by typing `pai: <prompt>`
+- REPL history used as context for the LLM prompt
+- Review, edit and confirm all generated code prior to execution.
+- Code executes on your machine.
 
 ## Installation & Usage
 ```
 pip install pai-repl
 $ export OPENAI_API_KEY=<api key>
-$ pai
+$ pai --chat-gpt gpt-4
 Inp [0]>
 ```
 

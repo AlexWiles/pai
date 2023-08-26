@@ -6,7 +6,7 @@ from typing import Any, Optional
 from pydantic.dataclasses import dataclass
 
 from pai.history import HistoryNode, HistoryTree
-from pai.llms.llm import LLM, LLMResponse
+from pai.llms.llm_protocol import LLM, LLMResponse
 
 
 @dataclass
@@ -167,6 +167,14 @@ class Console:
             max_nodes=self.max_history_nodes_for_llm_context
         )
         return self.llm.call(history, prompt)
+
+    def get_history(self) -> list[HistoryNode]:
+        """Get the history of the console."""
+        return self.history_tree.lineage(self.max_history_nodes_for_llm_context)
+
+    def get_prompt(self, prompt: str) -> Any:
+        """Get the prompt for the LLM"""
+        return self.llm.prompt(self.get_history(), prompt)
 
 
 def append_new_line(text: str) -> str:

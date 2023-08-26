@@ -34,3 +34,6 @@ class LLM(Protocol):
     @abstractmethod
     def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
         ...
+
+    def prompt(self, history: list[HistoryNode], prompt: str) -> Any:
+        ...

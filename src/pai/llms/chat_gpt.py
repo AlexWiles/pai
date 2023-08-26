@@ -3,7 +3,13 @@ from typing import Any
 import openai
 
 from pai.history import HistoryNode
-from pai.llms.llm import LLM, LLMError, LLMResponse, LLMResponseCode, LLMResponseMessage
+from pai.llms.llm_protocol import (
+    LLM,
+    LLMError,
+    LLMResponse,
+    LLMResponseCode,
+    LLMResponseMessage,
+)
 
 
 class ChatGPT(LLM):
@@ -12,7 +18,7 @@ class ChatGPT(LLM):
     def __init__(self, model: str) -> None:
         self.model = model
 
-    def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
+    def prompt(self, history: list[HistoryNode], prompt: str) -> Any:
         # build the system prompt using the command history
         messages = [
             {
@@ -80,6 +86,11 @@ class ChatGPT(LLM):
             messages[-1]["content"] += f"\\n{prompt}"
         else:
             messages.append({"role": "user", "content": f"{prompt}"})
+
+        return messages
+
+    def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
+        messages = self.prompt(history, prompt)
 
         resp: Any = openai.ChatCompletion.create(
             model=self.model,

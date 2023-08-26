@@ -10,10 +10,11 @@ packages = [{ include = "pai", from = "./src" }]
 pai = "pai.cli:main"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.8"
 pydantic = "2.1.1"
 openai = "0.27.8"
 prompt_toolkit = "3.0.39"
+llama-cpp-python = "^0.1.78"
 
 [build-system]
 requires = ["poetry-core"]

@@ -17,7 +17,7 @@ from pai.console import (
     LLMMessageInput,
     UserInput,
 )
-from pai.llms.llm import LLMError, LLMResponseCode, LLMResponseMessage
+from pai.llms.llm_protocol import LLMError, LLMResponseCode, LLMResponseMessage
 
 
 def spinner_generator() -> Generator[str, None, None]:
@@ -99,6 +99,10 @@ class REPL:
         self.buffered_lines = []
 
     def go(self):
+        print("Welcome to pai")
+        print("Type 'pai: prompt' to generate code")
+        print("Type 'Ctrl+o' to insert a newline")
+        print("Type 'Ctrl+D' to exit")
         while True:
             try:
                 current_index = self.console.history_tree.current_position().depth
@@ -118,9 +122,9 @@ class REPL:
 
                 line_input = UserInput(line)
                 # handle the please command
-                if line.startswith("ai:"):
-                    # remove the "ai:" prefix
-                    line = line[3:]
+                if line.startswith("pai:"):
+                    # remove the "pai:" prefix
+                    line = line[4:]
 
                     with Animation():
                         resp = self.console.gen_code(line)
@@ -153,9 +157,15 @@ class REPL:
                         )
                 # handle the history command
                 if line.startswith("history"):
-                    nodes = self.console.history_tree.lineage()
+                    nodes = self.console.get_history()
                     for node in nodes:
                         print(f"[{node.depth}]: {node.data}")
+                    continue
+                if line.startswith("prompt:"):
+                    # remove the "prompt:" prefix
+                    line = line[7:]
+                    llm_prompt = self.console.get_prompt(line)
+                    print(llm_prompt)
                     continue
 
                 resp = self.console.handle_line(line_input)
