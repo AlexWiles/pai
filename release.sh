@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# Check if the user is authenticated with GitHub CLI
-if ! gh auth status >/dev/null 2>&1; then
-    echo "You need to authenticate with GitHub CLI (gh) first. Run 'gh auth login'."
-    exit 1
-fi
-
 # 1. Update the version in pyproject.toml
 echo "Enter the new version (e.g., 1.0.0): "
 read VERSION
@@ -39,10 +33,7 @@ git commit -m "Bump version to $VERSION and update changelog"
 git tag $VERSION
 
 # 5. Push to GitHub (including tags)
-git push origin master --tags
-
-# 6. Create a GitHub release using the GitHub CLI
-gh release create $VERSION --title "Release $VERSION" --notes "Release notes for version $VERSION"
+git push origin main --tags
 
 # 7. Build and Publish to PyPI
 poetry publish --build
