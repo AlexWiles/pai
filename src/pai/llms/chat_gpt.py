@@ -18,6 +18,9 @@ class ChatGPT(LLM):
     def __init__(self, model: str) -> None:
         self.model = model
 
+    def description(self) -> str:
+        return f"ChatGPT: {self.model}"
+
     def prompt(self, history: list[HistoryNode], prompt: str) -> Any:
         # build the system prompt using the command history
         messages = [

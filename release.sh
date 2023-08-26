@@ -17,13 +17,14 @@ else
     CHANGES=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s" --reverse)
 fi
 
-# Create or append to CHANGELOG.md
-if [ ! -f CHANGELOG.md ]; then
-    touch CHANGELOG.md
+# Capture current changelog content
+if [ -f CHANGELOG.md ]; then
+    OLD_CONTENT=$(cat CHANGELOG.md)
 fi
 
-# Format the changes and append to the changelog
-echo -e "\n## Version $VERSION - $(date +"%Y-%m-%d")\n$CHANGES" >> CHANGELOG.md
+# Format the changes and write to the changelog
+echo -e "## Version $VERSION - $(date +"%Y-%m-%d")\n$CHANGES\n\n$OLD_CONTENT" > CHANGELOG.md
+
 
 # 3. Commit the changes
 git add pyproject.toml CHANGELOG.md

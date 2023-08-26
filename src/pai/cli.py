@@ -1,10 +1,12 @@
 import argparse
+import toml
 
 from pai.console import Console
 from pai.llms.chat_gpt import ChatGPT
 from pai.llms.fake import FakeLLM
 from pai.llms.llama import LlamaCpp
 from pai.repl import REPL
+from pai.util import get_version_from_pyproject
 
 
 def parse_args():
@@ -13,20 +15,18 @@ def parse_args():
     group = parser.add_mutually_exclusive_group(required=True)
 
     group.add_argument(
-        "--chat-gpt",
-        help="Use ChatGPT as the llm with the given model. Requires OPENAI_API_KEY in the environment.",
-        choices=["gpt-3.5-turbo", "gpt-4"],
-        default=None,
-    )
-
-    group.add_argument(
         "--llama-cpp",
         help="Use LlamaCpp as the llm with the given model location.",
         metavar="PATH_TO_MODEL",
         type=str,
         default=None,
     )
-
+    group.add_argument(
+        "--chat-gpt",
+        help="Use ChatGPT as the llm with the given model. Requires OPENAI_API_KEY in the environment.",
+        choices=["gpt-3.5-turbo", "gpt-4"],
+        default="gpt-4",
+    )
     group.add_argument(
         "--fake-llm",
         help=argparse.SUPPRESS,
@@ -40,18 +40,25 @@ def parse_args():
         default=None,
     )
 
+    parser.add_argument(
+        "--version",
+        help="Print the version and exit.",
+        action="version",
+        version=get_version_from_pyproject(),
+    )
+
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
-    if args.chat_gpt:
-        llm = ChatGPT(args.chat_gpt)
-    elif args.llama_cpp:
+    if args.llama_cpp:
         llm = LlamaCpp(args.llama_cpp)
     elif args.fake_llm:
         llm = FakeLLM()
+    elif args.chat_gpt:
+        llm = ChatGPT(args.chat_gpt)
     else:
         raise ValueError(f"Must specify an LLM")
 

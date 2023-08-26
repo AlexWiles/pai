@@ -13,6 +13,9 @@ class FakeLLM(LLM):
     def prompt(self, history: list[HistoryNode], prompt: str) -> Any:
         return prompt
 
+    def description(self) -> str:
+        return "FakeLLM"
+
     def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
         if prompt == "indent":
             code = "for i in range(2):\n    for j in range(2):\n        print(i, j)\n\n    for k in range(2):\n        print(i, k)\n"

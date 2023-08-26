@@ -7,6 +7,7 @@ from prompt_toolkit import HTML, PromptSession, print_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
+from pai.util import get_version_from_pyproject
 
 
 from pai.console import (
@@ -99,10 +100,10 @@ class REPL:
         self.buffered_lines = []
 
     def go(self):
-        print("Welcome to pai")
-        print("Type 'pai: prompt' to generate code")
-        print("Type 'Ctrl+o' to insert a newline")
-        print("Type 'Ctrl+D' to exit")
+        print(f"pai {get_version_from_pyproject()} - {self.console.llm.description()}")
+        print("Type 'pai: <prompt>' to generate code")
+        print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
+
         while True:
             try:
                 current_index = self.console.history_tree.current_position().depth

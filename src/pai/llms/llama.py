@@ -10,6 +10,9 @@ class LlamaCpp(LLM):
     def __init__(self, model_location: str) -> None:
         self.llama = Llama(model_location, verbose=False)
 
+    def description(self) -> str:
+        return f"llama.cpp: {self.llama.model_path}"
+
     def prompt(self, history: list[HistoryNode], prompt: str) -> Any:
         full_prompt = ""
 

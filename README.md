@@ -1,11 +1,12 @@
-# pai: A Python REPL with built in LLM support
+# pai
+A Python REPL that employs language models to generate code, using prior REPL history for context. Supports OpenAI and llama.cpp
 
 ## Features
-- Supports ChatGPT and LlamaCpp
 - Generate code in the REPL by typing `pai: <prompt>`
 - REPL history used as context for the LLM prompt
 - Review, edit and confirm all generated code prior to execution.
 - Code executes on your machine.
+- Supports ChatGPT and llama.cpp
 
 ## Installation & Usage
 ```
