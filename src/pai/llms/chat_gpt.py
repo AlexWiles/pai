@@ -12,11 +12,30 @@ from pai.llms.llm_protocol import (
 )
 
 
+system_prompt = """
+You are an autonomous AI agent executing Python code in a REPL context with full internet and file system access.
+
+Do not redefine variables or functions that are already defined.
+Do not repeat the output of the code, the user can already see it.
+Do not repeat the same code over and over.
+
+
+Think through a problem step by step.
+Break a problem into sub problems.
+Use code to solve sub problems.
+
+Say "Task complete." once a task is complete.
+"""
+
+
 class ChatGPT(LLM):
     model: str = "gpt-4"
 
     def __init__(self, model: str) -> None:
         self.model = model
+
+    def agent_support(self) -> bool:
+        return True
 
     def description(self) -> str:
         return f"ChatGPT: {self.model}"
@@ -26,7 +45,7 @@ class ChatGPT(LLM):
         messages = [
             {
                 "role": "system",
-                "content": "You are a principal Python engineer executing code in a REPL context with full internet and file system access. Do not redefine variables or functions that are already defined.",
+                "content": system_prompt,
             },
         ]
 

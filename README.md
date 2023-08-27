@@ -1,19 +1,49 @@
 # pai
-A Python REPL that employs language models to generate code, using prior REPL history for context. Supports OpenAI and llama.cpp
+A Python REPL with a built in AI agent that uses prior REPL history for context.
+
+Supports OpenAI and llama.cpp
+
+## Installation
+```
+pip install pai-repl
+```
 
 ## Features
+
+### Code generation
+Generate code by typing `gen: <prompt>`. You can accept, edit or cancel the generated code.
+
+**Example**
+
+Generate code that operates on a variable setup by the user.
+```
+Inp [0]> nums = [1,2,3,3,3,3,3,3,3,4]
+Inp [1]> gen: what is the mean of nums?
+Gen [1]> import statistics
+    ...>
+    ...> mean = statistics.mean(nums)
+    ...> mean
+Out [2]> 2.8
+```
+
+### AI Agent
+Ask an AI agent to complete a task. It will continuously generate and run code until it completes the task or fails. All generated code must be approved by the user.
+
+
+
+
+### Code g
+- Generate code in the REPL by typing `gen: <prompt>`
 - Generate code in the REPL by typing `pai: <prompt>`
 - REPL history used as context for the LLM prompt
 - Review, edit and confirm all generated code prior to execution.
 - Code executes on your machine.
 - Supports ChatGPT and llama.cpp
 
-## Installation & Usage
+
+## Usage with OpenAI
 ```
-pip install pai-repl
-$ export OPENAI_API_KEY=<api key>
-$ pai --chat-gpt gpt-4
-Inp [0]>
+pai --gpt-4
 ```
 
 ## Examples
@@ -48,3 +78,10 @@ Gen [0]> import os
     ...> markdown_files
 Out [0]> ['README.md']
 ```
+# CLI Flags
+The CLI accepts the following flags:
+
+- `--llama-cpp`: Use LlamaCpp as the LLM with the given model location.
+- `--openai`: Use ChatGPT as the LLM with the given model. Requires OPENAI_API_KEY in the environment.
+- `--ctx-history-count`: Determines how many history nodes to send to the LLM as context. Defaults to all of them.
+- `--version`: Displays the version.

@@ -31,6 +31,9 @@ LLMResponse = LLMResponseCode | LLMResponseMessage | LLMError
 
 
 class LLM(Protocol):
+    def agent_support(self) -> bool:
+        return False
+
     @abstractmethod
     def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
         ...
