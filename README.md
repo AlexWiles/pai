@@ -10,7 +10,7 @@ pip install pai-repl
 
 ## Features
 
-### Code generation
+### Code Generation
 Generate code by typing `gen: <prompt>`. You can accept, edit or cancel the generated code.
 
 **Example**
@@ -29,16 +29,6 @@ Out [2]> 2.8
 ### AI Agent
 Ask an AI agent to complete a task. It will continuously generate and run code until it completes the task or fails. All generated code must be approved by the user.
 
-
-
-
-### Code g
-- Generate code in the REPL by typing `gen: <prompt>`
-- Generate code in the REPL by typing `pai: <prompt>`
-- REPL history used as context for the LLM prompt
-- Review, edit and confirm all generated code prior to execution.
-- Code executes on your machine.
-- Supports ChatGPT and llama.cpp
 
 
 ## Usage with OpenAI
