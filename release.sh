@@ -10,7 +10,6 @@ poetry version $VERSION
 # Create a version file in the src directory
 echo "VERSION = '$VERSION'" > src/pai/version.py
 
-
 # 2. Update CHANGELOG.md using Git commit history
 LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null) # Gets the latest tag
 if [ -z "$LAST_TAG" ]; then

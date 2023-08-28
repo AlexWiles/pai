@@ -3,6 +3,7 @@ import code
 import io
 import sys
 from typing import Any, Optional
+from uuid import UUID
 from pydantic.dataclasses import dataclass
 
 from pai.history import HistoryNode, HistoryTree

@@ -1,4 +1,4 @@
-# pai
+# pai: a python REPL with an integrated LLM agent
 A Python REPL with a built in AI agent that uses prior REPL history for context.
 
 Supports OpenAI and llama.cpp
