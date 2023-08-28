@@ -6,7 +6,7 @@ from pai.llms.chat_gpt import ChatGPT
 from pai.llms.fake import FakeLLM
 from pai.llms.llama import LlamaCpp
 from pai.repl import REPL
-from pai.util import get_version_from_pyproject
+from pai.version import VERSION
 
 
 def parse_args():
@@ -44,7 +44,7 @@ def parse_args():
         "--version",
         help="Print the version and exit.",
         action="version",
-        version=get_version_from_pyproject(),
+        version=VERSION,
     )
 
     return parser.parse_args()

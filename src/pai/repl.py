@@ -7,7 +7,7 @@ from prompt_toolkit import HTML, PromptSession, print_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.styles import Style
-from pai.util import get_version_from_pyproject
+from pai.version import VERSION
 
 
 from pai.console import (
@@ -175,7 +175,7 @@ class REPL:
             raise Exception(f"LLM returned an invalid response: {resp}")
 
     def go(self):
-        print(f"pai {get_version_from_pyproject()} - {self.console.llm.description()}")
+        print(f"pai {VERSION} - {self.console.llm.description()}")
         print("Type 'gen: <prompt>' to generate code.")
         print("Type 'pai: <prompt>' to start an agent.")
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
