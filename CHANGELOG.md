@@ -1,3 +1,6 @@
+## Version 0.1.8 - 2023-08-28
+- Keep the version in a source file
+
 ## Version 0.1.7 - 2023-08-28
 - Print llm description when repl starts
 - rename the 'chat-gpt' flag to 'openai'
