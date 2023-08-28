@@ -176,7 +176,8 @@ class REPL:
 
     def go(self):
         print(f"pai {get_version_from_pyproject()} - {self.console.llm.description()}")
-        print("Type 'pai: <prompt>' to generate code")
+        print("Type 'gen: <prompt>' to generate code.")
+        print("Type 'pai: <prompt>' to start an agent.")
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
 
         while True:
@@ -199,9 +200,9 @@ class REPL:
                         print("Agent support is not enabled for this LLM.")
                         continue
 
-                    print("Agent mode started. Ctrl+C to exit.")
+                    print("Agent mode . Ctrl+C to exit.")
 
-                    line = line[6:]  # remove the "agent:" prefix
+                    line = line[4:]  # remove the "pai:" prefix
 
                     # an agent is basically a gen code loop
                     # we'll keep generating code until the llm returns a non-code message or the user cancels
