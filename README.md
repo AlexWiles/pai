@@ -1,12 +1,14 @@
 # pai: a python REPL with an integrated LLM agent
-A Python REPL with a built in AI agent that uses prior REPL history for context.
+A Python REPL with a built in AI agent that uses prior REPL history for context. Supports OpenAI and llama.cpp
 
-Supports OpenAI and llama.cpp
 
 ## Installation
 ```
 pip install pai-repl
 ```
+
+## Goals
+AI agents doing useful stuff, on your machine
 
 ## Usage
 
@@ -38,7 +40,7 @@ OK? [1]> import statistics
     ...>
     ...> mean = statistics.mean(nums)
     ...> mean
-OUT [2]> 2.8
+OUT [1]> 2.8
 ```
 
 ### AI Agent
@@ -75,7 +77,7 @@ OK? [1]> import pandas as pd
     ...>
     ...> # Display the first few rows of the DataFrame
     ...> data.head()
-OUT [2]> Traceback (most recent call last):
+OUT [1]> Traceback (most recent call last):
   File "<string>", line 1, in <module>
 ModuleNotFoundError: No module named 'pandas'
 It appears that the pandas library, which is typically used for data analysis in Python, is not available in this environment. However, I can still provide a basic analysis using standard Python functionality.
