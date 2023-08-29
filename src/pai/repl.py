@@ -21,12 +21,7 @@ from pai.console import (
     WaitingForInput,
     WaitingForLLM,
 )
-from pai.llms.llm_protocol import (
-    LLMError,
-    LLMResponseCode,
-    LLMResponseMessage,
-    LLMStreamChunk,
-)
+from pai.llms.llm_protocol import LLMStreamChunk
 
 
 # Create a session object
@@ -83,6 +78,10 @@ class REPL:
         """Generate the code gen prompt."""
         return HTML(f"<gen>LLM [{self._current_index()}]> </gen>")
 
+    def _ok_prompt(self) -> HTML:
+        """Generate the code gen prompt."""
+        return HTML(f"<gen>OK? [{self._current_index()}]> </gen>")
+
     def _out_prompt(self) -> HTML:
         """Generate the output prompt."""
         return HTML(f"<out>OUT [{self._current_index()}]> </out>")
@@ -127,7 +126,7 @@ class REPL:
                     # So they can edit it, approve it, or cancel it
                     llm_code = event.code
                     edited: str = self.session.prompt(
-                        self._gen_prompt(),
+                        self._ok_prompt(),
                         default=llm_code.code,
                         prompt_continuation=self._multi_prompt(),
                         style=prompt_style,
@@ -141,7 +140,6 @@ class REPL:
                         raw_resp=llm_code.raw_resp,
                         agent_mode=llm_code.agent_mode,
                     )
-
                     last_event = event
                     event = generator.send(console_inp)
                 elif isinstance(event, NewOuput):
@@ -168,10 +166,6 @@ class REPL:
                         # print a newline if the output doesn't end with one
                         if not event.value.endswith("\n"):
                             print()
-
-                    last_event = event
-                    event = next(generator)
-                elif isinstance(event, WaitingForLLM):
                     last_event = event
                     event = next(generator)
                 elif isinstance(event, LLMStreamChunk):
@@ -182,8 +176,12 @@ class REPL:
                     print(event.text, end="")
                     last_event = event
                     event = next(generator)
+                elif isinstance(event, WaitingForLLM):
+                    last_event = event
+                    event = next(generator)
                 else:
                     raise ValueError(f"Unknown input state: {type(event)}")
+
             except KeyboardInterrupt as e:
                 # Handle Ctrl+C (cancel)
                 string_error = str(e)

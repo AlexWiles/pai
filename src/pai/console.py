@@ -190,9 +190,6 @@ class Console:
     input_state: WaitingForInput | WaitingForInputApproval
 
     def __init__(self, llm: LLM, llm_context_nodes: Optional[int] = None):
-        # pass functions that can be called to gen code or start the agent
-        self.console = WrappedInteractiveConsole()
-
         self.history_tree = HistoryTree()
         self.llm = llm
         self.max_history_nodes_for_llm_context = llm_context_nodes
@@ -200,6 +197,9 @@ class Console:
         # holds input that is not yet processed. This is used for generated code.
         self.input_state = WaitingForInput()
         self.agent_mode = False
+
+        locals = {"history": self.history_tree}
+        self.console = WrappedInteractiveConsole(locals=locals)
 
     def _code_gen(self, prompt: str) -> Generator[ConsoleEvent, None, InputState]:
         "Handles code gen commands. calls the llm, sets correct input state, updates the history"

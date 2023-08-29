@@ -23,7 +23,6 @@ $ pai --llama <path to model>
 ```
 
 
-
 ## Features
 
 ### Code Generation
@@ -33,13 +32,13 @@ Generate code by typing `gen: <prompt>`. You can accept, edit or cancel the gene
 
 Generate code that operates on a variable setup by the user.
 ```
-Inp [0]> nums = [1,2,3,3,3,3,3,3,3,4]
-Inp [1]> gen: what is the mean of nums?
-Gen [1]> import statistics
+INP [0]> nums = [1,2,3,3,3,3,3,3,3,4]
+INP [1]> gen: what is the mean of nums?
+OK? [1]> import statistics
     ...>
     ...> mean = statistics.mean(nums)
     ...> mean
-Out [2]> 2.8
+OUT [2]> 2.8
 ```
 
 ### AI Agent
@@ -55,10 +54,10 @@ We can see the agent doing the following:
 - Do some analysis and print the results
 
 ```
-Inp [0]> pai: there is a csv in the current directory. find it and give me a full analysis
+INP [0]> pai: there is a csv in the current directory. find it and give me a full analysis
 
 First, let's list all the CSV files in the current directory.
-Gen [0]> import os
+OK? [0]> import os
     ...>
     ...> # List all files in the current directory
     ...> files = os.listdir()
@@ -67,22 +66,22 @@ Gen [0]> import os
     ...> csv_files = [file for file in files if file.endswith('.csv')]
     ...>
     ...> csv_files
-Out [1]> ['running_data.csv']
+OUT [1]> ['running_data.csv']
 The CSV file in the current directory is named 'running_data.csv'. Now, I will load the data and analyze it. Let's start by loading the data and looking at the first few rows to understand its structure.
-Gen [1]> import pandas as pd
+OK? [1]> import pandas as pd
     ...>
     ...> # Load the csv file into a pandas DataFrame
     ...> data = pd.read_csv('running_data.csv')
     ...>
     ...> # Display the first few rows of the DataFrame
     ...> data.head()
-Out [2]> Traceback (most recent call last):
+OUT [2]> Traceback (most recent call last):
   File "<string>", line 1, in <module>
 ModuleNotFoundError: No module named 'pandas'
 It appears that the pandas library, which is typically used for data analysis in Python, is not available in this environment. However, I can still provide a basic analysis using standard Python functionality.
 
 Let's first take a look at the contents of the CSV file.
-Gen [2]> import csv
+OK? [2]> import csv
     ...>
     ...> # Open the csv file
     ...> with open('running_data.csv', 'r') as file:
@@ -93,8 +92,8 @@ Gen [2]> import csv
     ...>     first_few_rows = [next(reader) for _ in range(5)]
     ...>
     ...> headers, first_few_rows
-Out [3]> (['Date', 'Distance', 'Speed', 'Duration'], [['2023-07-29', '10', '9', '1.1111111111111112'], ['2023-07-30', '10', '8', '1.25'], ['2023-07-31', '8', '10', '0.8'], ['2023-08-01', '3', '10', '0.3'], ['2023-08-02', '6', '9', '0.6666666666666666']])
-Gen [3]>
+OUT [3]> (['Date', 'Distance', 'Speed', 'Duration'], [['2023-07-29', '10', '9', '1.1111111111111112'], ['2023-07-30', '10', '8', '1.25'], ['2023-07-31', '8', '10', '0.8'], ['2023-08-01', '3', '10', '0.3'], ['2023-08-02', '6', '9', '0.6666666666666666']])
+OK? [3]>
     ...> # Iterate over the rows and analyze the data
     ...>
     ...> # Initialize some variables
@@ -121,8 +120,8 @@ Gen [3]>
     ...> average_duration = sum_duration / num_rows
     ...>
     ...> average_distance, average_speed, average_duration
-Out [4]> (5.666666666666667, 9.466666666666667, 0.6017760942760944)
-Out [5]> Here is the analysis of the data in the `running_data.csv` file:
+OK? [4]> (5.666666666666667, 9.466666666666667, 0.6017760942760944)
+OK? [5]> Here is the analysis of the data in the `running_data.csv` file:
 
 The data contains four columns: Date, Distance, Speed, and Duration.
 
@@ -143,5 +142,5 @@ In terms of overall metrics:
 Please note that these averages are calculated from the existing data in the CSV file.
 
 These measures can give you a good understanding of the data you are dealing with and can be a good starting point for further analysis. Task complete.
-Inp [5]>
+INP [5]>
 ```

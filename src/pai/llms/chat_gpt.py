@@ -22,8 +22,6 @@ You can access the internet
 You can access the file system
 
 Do not redefine variables or functions that are already defined.
-Do not repeat the output of the code, the user can already see it.
-Do not repeat the same code over and over.
 Do not assume things like what operating system you are running on. Use python to find out.
 
 All code you write will be approved by a human before it is executed.
@@ -33,6 +31,7 @@ If the task is complete, summarize the findings.
 If a task is not complete, analyze the latest output and continue.
 
 Think through a problem step by step.
+Use code to collect data.
 Break a problem into sub problems.
 Use code to solve sub problems.
 """
@@ -161,14 +160,13 @@ class ChatGPT(LLM):
             "arguments": "",
         }
 
+        # this is nasty
         for response_chunk in resp:
-            # print(response_chunk)
             if "choices" in response_chunk:
                 deltas = response_chunk["choices"][0]["delta"]
                 if "function_call" in deltas:
                     if "name" in deltas["function_call"]:
                         func_call["name"] = deltas["function_call"]["name"]
-                        yield LLMStreamChunk(f"\n```python\n")
                     if "arguments" in deltas["function_call"]:
                         func_call["arguments"] += deltas["function_call"]["arguments"]
                         yield LLMStreamChunk(deltas["function_call"]["arguments"])
@@ -178,11 +176,11 @@ class ChatGPT(LLM):
                         len(raw_chunks) > 0
                         and "function_call" in raw_chunks[-1]["choices"][0]["delta"]
                     ):
-                        yield LLMStreamChunk(f"\n```\n")
+                        yield LLMStreamChunk(f"\n")
                     response_text += deltas["content"]
                     yield LLMStreamChunk(deltas["content"])
                 if response_chunk["choices"][0]["finish_reason"] == "function_call":
-                    yield LLMStreamChunk(f"\n```")
+                    yield LLMStreamChunk(f"\n")
             raw_chunks.append(response_chunk)
 
         yield LLMStreamChunk(f"\n")
