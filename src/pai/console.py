@@ -13,6 +13,7 @@ from pai.llms.llm_protocol import (
     LLMResponse,
     LLMResponseCode,
     LLMResponseMessage,
+    LLMStreamChunk,
 )
 
 
@@ -168,7 +169,12 @@ class NewOuput:
 
 
 ConsoleEvent = (
-    WaitingForInput | WaitingForInputApproval | WaitingForLLM | NewOuput | NewLLMMessage
+    WaitingForInput
+    | WaitingForInputApproval
+    | WaitingForLLM
+    | NewOuput
+    | NewLLMMessage
+    | LLMStreamChunk
 )
 
 InputState = WaitingForInput | WaitingForInputApproval
@@ -203,7 +209,7 @@ class Console:
         history = self.history_tree.lineage(
             max_nodes=self.max_history_nodes_for_llm_context
         )
-        resp = self.llm.call(history, prompt)
+        resp = yield from self.llm.call(history, prompt)
 
         if isinstance(resp, LLMResponseCode):
             llm_inp = LLMCodeInput(

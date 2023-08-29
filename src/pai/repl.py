@@ -21,44 +21,12 @@ from pai.console import (
     WaitingForInput,
     WaitingForLLM,
 )
-from pai.llms.llm_protocol import LLMError, LLMResponseCode, LLMResponseMessage
-
-
-def spinner_generator() -> Generator[str, None, None]:
-    """Generate spinner frames."""
-    while True:
-        yield " Generating response.   "
-        yield " Generating response..  "
-        yield " Generating response... "
-        yield " Generating response...."
-        yield " Generating response... "
-        yield " Generating response..  "
-        yield " Generating response.   "
-
-
-def spinner_animation(event: threading.Event):
-    """Spinner animation function to be run in a separate thread."""
-    spinner = spinner_generator()
-    while not event.is_set():
-        print(next(spinner), end="\r", flush=True)
-        time.sleep(0.2)
-    print(" " * 2, end="\r", flush=True)  # Clear the spinner
-
-
-class WaitingAnimation:
-    """Context manager for spinner animation."""
-
-    def __enter__(self):
-        self.stop_event = threading.Event()
-        self.spinner_thread = threading.Thread(
-            target=spinner_animation, args=(self.stop_event,)
-        )
-        self.spinner_thread.start()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.stop_event.set()
-        self.spinner_thread.join()
+from pai.llms.llm_protocol import (
+    LLMError,
+    LLMResponseCode,
+    LLMResponseMessage,
+    LLMStreamChunk,
+)
 
 
 # Create a session object
@@ -139,7 +107,9 @@ class REPL:
 
         generator = self.console.start_generator()
         event = next(generator)  # Start the generator
+        last_event = None
         while True:
+            sys.stdout.flush()
             try:
                 if isinstance(event, WaitingForInput):
                     # get the next str input from the user
@@ -149,6 +119,7 @@ class REPL:
                         style=prompt_style,
                     )
                     console_inp = UserInput(line)
+                    last_event = event
                     event = generator.send(console_inp)
                 elif isinstance(event, WaitingForInputApproval):
                     # The LLM generated code but it hasn't been approved yet
@@ -171,6 +142,7 @@ class REPL:
                         agent_mode=llm_code.agent_mode,
                     )
 
+                    last_event = event
                     event = generator.send(console_inp)
                 elif isinstance(event, NewOuput):
                     # print the general output
@@ -182,10 +154,13 @@ class REPL:
                         # print a newline if the output doesn't end with one
                         if not event.value.endswith("\n"):
                             print()
+                    last_event = event
                     event = next(generator)
                 elif isinstance(event, NewLLMMessage):
-                    # print the LLM output
-                    if event.value:
+                    # only print the message if it wasn't just streamed
+                    # we can tell by looking at the last event
+                    if not isinstance(last_event, LLMStreamChunk):
+                        # print the LLM output
                         print_formatted_text(
                             self._gen_prompt(), style=prompt_style, end=""
                         )
@@ -193,10 +168,20 @@ class REPL:
                         # print a newline if the output doesn't end with one
                         if not event.value.endswith("\n"):
                             print()
+
+                    last_event = event
                     event = next(generator)
                 elif isinstance(event, WaitingForLLM):
-                    with WaitingAnimation():
-                        event = next(generator)
+                    last_event = event
+                    event = next(generator)
+                elif isinstance(event, LLMStreamChunk):
+                    if not isinstance(last_event, LLMStreamChunk):
+                        print_formatted_text(
+                            self._gen_prompt(), style=prompt_style, end=""
+                        )
+                    print(event.text, end="")
+                    last_event = event
+                    event = next(generator)
                 else:
                     raise ValueError(f"Unknown input state: {type(event)}")
             except KeyboardInterrupt as e:

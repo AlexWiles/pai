@@ -1,5 +1,5 @@
 import json
-from typing import Any
+from typing import Any, Generator
 import openai
 
 from pai.history import HistoryNode
@@ -9,6 +9,7 @@ from pai.llms.llm_protocol import (
     LLMResponse,
     LLMResponseCode,
     LLMResponseMessage,
+    LLMStreamChunk,
 )
 
 
@@ -23,6 +24,7 @@ You can access the file system
 Do not redefine variables or functions that are already defined.
 Do not repeat the output of the code, the user can already see it.
 Do not repeat the same code over and over.
+Do not assume things like what operating system you are running on. Use python to find out.
 
 All code you write will be approved by a human before it is executed.
 
@@ -113,14 +115,21 @@ class ChatGPT(LLM):
 
         # if there is a user prompt, then add it to the messages
         if prompt.strip() != "":
-            # add the user prompt. if the last message is a user prompt, then add the prompt to the last message
             if messages[-1]["role"] == "user":
+                # if the last message is a user prompt, then add the prompt to the last message
                 messages[-1]["content"] += f"\\n{prompt}"
             else:
+                # if the last message is not a user prompt, then add a new message
                 messages.append({"role": "user", "content": f"{prompt}"})
+
         return messages
 
-    def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
+    def call(
+        self, history: list[HistoryNode], prompt: str
+    ) -> Generator[LLMStreamChunk, None, LLMResponse]:
+        # make it an empty generator
+        yield from []
+
         messages = self.prompt(history, prompt)
 
         resp: Any = openai.ChatCompletion.create(
@@ -142,27 +151,59 @@ class ChatGPT(LLM):
                     },
                 }
             ],
+            stream=True,
         )
 
-        new_msg = resp.choices[0].message
+        raw_chunks = []
+        response_text = ""
+        func_call = {
+            "name": "",
+            "arguments": "",
+        }
+
+        for response_chunk in resp:
+            # print(response_chunk)
+            if "choices" in response_chunk:
+                deltas = response_chunk["choices"][0]["delta"]
+                if "function_call" in deltas:
+                    if "name" in deltas["function_call"]:
+                        func_call["name"] = deltas["function_call"]["name"]
+                        yield LLMStreamChunk(f"\n```python\n")
+                    if "arguments" in deltas["function_call"]:
+                        func_call["arguments"] += deltas["function_call"]["arguments"]
+                        yield LLMStreamChunk(deltas["function_call"]["arguments"])
+                elif "content" in deltas:
+                    # if the last message is a function call, close the md code block
+                    if (
+                        len(raw_chunks) > 0
+                        and "function_call" in raw_chunks[-1]["choices"][0]["delta"]
+                    ):
+                        yield LLMStreamChunk(f"\n```\n")
+                    response_text += deltas["content"]
+                    yield LLMStreamChunk(deltas["content"])
+                if response_chunk["choices"][0]["finish_reason"] == "function_call":
+                    yield LLMStreamChunk(f"\n```")
+            raw_chunks.append(response_chunk)
+
+        yield LLMStreamChunk(f"\n")
 
         # check if the response is a function call
-        if new_msg.get("function_call", None):
+        if func_call["name"] != "":
             # parse the arguments as json
             # expecting something like {"code": "print('hello world')"}
             try:
-                j = json.loads(new_msg.function_call.arguments)
+                j = json.loads(func_call["arguments"])
             except json.JSONDecodeError as e:
                 # sometimes the function call arguments are just code, not a json object
                 # rather than erroring, we check if it is valid python code and return it if it is
                 try:
-                    compile(new_msg.function_call.arguments, "<string>", "exec")
+                    compile(func_call["arguments"], "<string>", "exec")
                     # if it is valid python code, then we return a LLMResponseCode
                     return LLMResponseCode(
                         prompt=prompt,
-                        code=new_msg.function_call.arguments,
-                        message=new_msg.get("content", None),
-                        raw=resp,
+                        code=func_call["arguments"],
+                        message=response_text or None,
+                        raw=raw_chunks,
                     )
                 except SyntaxError:
                     # return the original JSONDecodeError
@@ -171,12 +212,12 @@ class ChatGPT(LLM):
             return LLMResponseCode(
                 prompt=prompt,
                 code=j["code"],
-                message=new_msg.get("content", None),
-                raw=resp,
+                message=response_text or None,
+                raw=raw_chunks,
             )
         else:
             return LLMResponseMessage(
                 prompt=prompt,
-                message=new_msg.content,
-                raw=resp,
+                message=response_text,
+                raw=raw_chunks,
             )

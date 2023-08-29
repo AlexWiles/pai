@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional, Protocol
+from typing import Any, Generator, Optional, Protocol
 from pydantic.dataclasses import dataclass
 
 from pai.history import HistoryNode
@@ -27,6 +27,11 @@ class LLMError:
     raw: Any
 
 
+@dataclass
+class LLMStreamChunk:
+    text: str
+
+
 LLMResponse = LLMResponseCode | LLMResponseMessage | LLMError
 
 
@@ -35,7 +40,9 @@ class LLM(Protocol):
         return False
 
     @abstractmethod
-    def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
+    def call(
+        self, history: list[HistoryNode], prompt: str
+    ) -> Generator[LLMStreamChunk, None, LLMResponse]:
         ...
 
     @abstractmethod
