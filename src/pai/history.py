@@ -95,5 +95,11 @@ class HistoryTree:
         lineage.reverse()
         return lineage
 
+    def lineage_since(self, idx: int) -> list[HistoryNode]:
+        "Get nodes from a specific index to the current node."
+        # this can be done more efficiently than pulling the entire lineage
+        lineage = self.lineage()
+        return lineage[idx:]
+
     def __repr__(self):
         return f"HistoryTree(cursor={self.cursor})"

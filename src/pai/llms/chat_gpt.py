@@ -111,12 +111,13 @@ class ChatGPT(LLM):
                     ]
                 )
 
-        # add the user prompt. if the last message is a user prompt, then add the prompt to the last message
-        if messages[-1]["role"] == "user":
-            messages[-1]["content"] += f"\\n{prompt}"
-        else:
-            messages.append({"role": "user", "content": f"{prompt}"})
-
+        # if there is a user prompt, then add it to the messages
+        if prompt.strip() != "":
+            # add the user prompt. if the last message is a user prompt, then add the prompt to the last message
+            if messages[-1]["role"] == "user":
+                messages[-1]["content"] += f"\\n{prompt}"
+            else:
+                messages.append({"role": "user", "content": f"{prompt}"})
         return messages
 
     def call(self, history: list[HistoryNode], prompt: str) -> LLMResponse:
