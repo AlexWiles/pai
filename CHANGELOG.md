@@ -1,3 +1,8 @@
+## Version 0.1.10 - 2023-08-29
+- update readme
+- Update README with new Goals section
+- update prompt and readme
+
 ## Version 0.1.9 - 2023-08-29
 - Update the system prompt for openai
 - Refactor and decouple the repl and the console state
