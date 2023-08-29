@@ -21,6 +21,7 @@ You can access and modify previously defined variables and functions.
 You can access the internet
 You can access the file system
 
+Do not copy variables or functions that were already defined, you have access.
 Do not redefine variables or functions that are already defined.
 Do not assume things like what operating system you are running on. Use python to find out.
 
