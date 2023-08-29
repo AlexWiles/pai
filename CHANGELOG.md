@@ -1,3 +1,8 @@
+## Version 0.1.9 - 2023-08-29
+- Update the system prompt for openai
+- Refactor and decouple the repl and the console state
+- Add support for streaming
+
 ## Version 0.1.8 - 2023-08-28
 - Keep the version in a source file
 
