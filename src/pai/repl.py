@@ -1,7 +1,7 @@
 import sys
 import threading
 import time
-from typing import Generator, Tuple
+from typing import Generator, Optional, Tuple
 
 from prompt_toolkit import HTML, PromptSession, print_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
@@ -98,15 +98,29 @@ class REPL:
             print_formatted_text(self._out_prompt(), style=prompt_style, end="")
             print(resp, end="")
 
-    def go(self):
+    def go(self, initial_prompt: Optional[str] = None):
         print(f"pai {VERSION} - {self.console.llm.description()}")
         print("Type 'gen: <prompt>' to generate code.")
         print("Type 'pai: <prompt>' to start an agent.")
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
 
         generator = self.console.start_generator()
-        event = next(generator)  # Start the generator
         last_event = None
+        event = next(generator)  # Start the generator
+
+        if initial_prompt:
+            # if there is an initial prompt, print it and send it to the console
+            # we assume the initial prompt is a prompt, not code. So, we
+            # prepend 'pai: ' to it (if it doesn't already start with 'pai: ').
+
+            if not initial_prompt.startswith("pai: "):
+                initial_prompt = f"pai: {initial_prompt}"
+
+            print_formatted_text(self._inp_prompt(), style=prompt_style, end="")
+            print(initial_prompt)
+            inp = UserInput(initial_prompt)
+            event = generator.send(inp)
+
         while True:
             sys.stdout.flush()
             try:

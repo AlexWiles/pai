@@ -30,7 +30,7 @@ echo -e "## Version $VERSION - $(date +"%Y-%m-%d")\n$CHANGES\n\n$OLD_CONTENT" > 
 
 
 # 3. Commit the changes
-git add pyproject.toml CHANGELOG.md
+git add pyproject.toml CHANGELOG.md src/pai/version.py
 git commit -m "Bump version to $VERSION and update changelog"
 
 # 4. Tag the commit

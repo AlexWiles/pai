@@ -1,4 +1,5 @@
 import argparse
+import sys
 import toml
 
 from pai.console import Console
@@ -10,9 +11,9 @@ from pai.version import VERSION
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="AI REPL")
+    parser = argparse.ArgumentParser(description="pai")
 
-    group = parser.add_mutually_exclusive_group(required=True)
+    group = parser.add_mutually_exclusive_group()
 
     group.add_argument(
         "--llama-cpp",
@@ -47,6 +48,10 @@ def parse_args():
         version=VERSION,
     )
 
+    parser.add_argument(
+        "prompt", help="The initial prompt for the LLM agent", nargs="?", default=""
+    )
+
     return parser.parse_args()
 
 
@@ -57,15 +62,13 @@ def main():
         llm = LlamaCpp(args.llama_cpp)
     elif args.fake_llm:
         llm = FakeLLM()
-    elif args.openai:
-        # openai has a default, so we check last
-        llm = ChatGPT(args.openai)
     else:
-        raise ValueError(f"Must specify an LLM")
+        # openai is the default
+        llm = ChatGPT(args.openai)
 
     console = Console(llm, llm_context_nodes=args.ctx_history_count)
     repl = REPL(console)
-    repl.go()
+    repl.go(args.prompt)
 
 
 if __name__ == "__main__":
