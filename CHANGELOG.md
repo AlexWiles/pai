@@ -1,3 +1,6 @@
+## Version 0.1.11 - 2023-09-03
+- add initial prompt argument
+
 ## Version 0.1.10 - 2023-08-29
 - update readme
 - Update README with new Goals section
