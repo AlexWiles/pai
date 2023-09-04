@@ -1,4 +1,4 @@
-# pai: a python REPL with an integrated LLM agent
+# pai: a Python REPL with built in AI Agents
 A Python REPL with a built in AI agent that uses prior REPL history for context. Supports OpenAI and llama.cpp
 
 ## Goals
@@ -9,41 +9,69 @@ AI agents doing useful stuff, on your machine.
 pip install pai-repl
 ```
 
-## Usage
+## Command line usage
+When you invoke `pai`, it will start an interactive Python REPL with a built in AI agent.
 
-Use with openai
+```
+$ pai
+INP [0]>
+```
+
+
+Use with OpenAI. The default model is `gpt-4`
 ```
 $ export OPENAI_API_KEY=<your key>
-$ pai --openai gpt-4
+$ pai
+```
+
+Specify OpenAI model
+```
+$ pai --openai gpt-3.5-turbo
 ```
 
 Use with llama.cpp compatible models
-
 ```
 $ pai --llama <path to model>
 ```
 
-
-## Features
-
-### Code Generation
-Generate code by typing `gen: <prompt>`. You can accept, edit or cancel the generated code.
-
-**Example**
-
-Generate code that operates on a variable setup by the user.
+Specify an initial prompt for the AI agent
 ```
-INP [0]> nums = [1,2,3,3,3,3,3,3,3,4]
-INP [1]> gen: what is the mean of nums?
-OK? [1]> import statistics
+$ pai "find the largest file in the current directory"
+```
+
+## Generate code
+
+Generate code in the REPL by type `gen: <prompt>`. The generated code will be displayed and you can accept, edit or cancel it.
+
+<img src="./assets/gen.gif" />
+
+
+```
+INP [0]> gen: list the markdown files in curr directory
+LLM [0]> import os
+
+# Get the list of all files in current directory
+files_in_directory = os.listdir(os.getcwd())
+
+# Filter the list for files ending in ".md"
+markdown_files = [file for file in files_in_directory if file.endswith(".md")]
+
+markdown_files
+
+OK? [0]> import os
     ...>
-    ...> mean = statistics.mean(nums)
-    ...> mean
-OUT [1]> 2.8
+    ...> # Get the list of all files in current directory
+    ...> files_in_directory = os.listdir(os.getcwd())
+    ...>
+    ...> # Filter the list for files ending in ".md"
+    ...> markdown_files = [file for file in files_in_directory if file.endswith(
+    ...> ".md")]
+INP [1]> markdown_files
+OUT [1]> ['LICENSE.md', 'CHANGELOG.md', 'README.md']
 ```
 
-### AI Agent
-Ask an AI agent to complete a task. It will continuously generate and run code until it completes the task or fails. All generated code must be approved by the user.
+## Start the AI Agent
+Prompt the AI agent to complete a task by typing `pai: <prompt>`. The AI agent will continuously generate and run code until it completes the task or fails. All generated code must be approved by the user.
 
 The task: "pai: there is a csv in the current directory. find it and give me a full analysis"
 
