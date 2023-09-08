@@ -1,3 +1,8 @@
+## Version 0.1.12 - 2023-09-08
+- Updated README and added assets
+- Readme updates
+- prompt updates
+
 ## Version 0.1.11 - 2023-09-03
 - add initial prompt argument
 
