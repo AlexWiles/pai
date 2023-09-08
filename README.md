@@ -1,5 +1,7 @@
-# pai: a Python REPL with built in code generation and AI agents
+# pai: It's like having code interpreter in your Python REPL
 A Python REPL with a built in AI agents and code generation. REPL history is used for LLM context. Supports OpenAI and llama.cpp
+
+You and the AI have access to the same data, so you can guide the AI and move seamlessly between the two.
 
 ## Installation
 ```
@@ -31,21 +33,20 @@ Use with llama.cpp compatible models
 $ pai --llama <path to model>
 ```
 
-Specify an initial prompt for the AI agent
+Prompt pai from the command line
 ```
 $ pai "find the largest file in the current directory"
 ```
+
+## AI Agent
+Prompt the AI agent to complete a task by typing `pai: <prompt>`. The AI agent will continuously generate and run code until it completes the task or fails. All generated code must be approved by the user.
+
+The task: "pai: there is a csv in the current directory. find it and give me a full analysis"
+
+<img src="./assets/agent.gif" />
 
 ## Generate code
 
 Generate code in the REPL by type `gen: <prompt>`. The generated code will be displayed and you can accept, edit or cancel it.
 
 <img src="./assets/gen.gif" />
-
-
-## Start the AI Agent
-Prompt the AI agent to complete a task by typing `pai: <prompt>`. The AI agent will continuously generate and run code until it completes the task or fails. All generated code must be approved by the user.
-
-The task: "pai: there is a csv in the current directory. find it and give me a full analysis"
-
-<img src="./assets/agent.gif" />

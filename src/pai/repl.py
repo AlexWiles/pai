@@ -99,9 +99,7 @@ class REPL:
             print(resp, end="")
 
     def go(self, initial_prompt: Optional[str] = None):
-        print(f"pai {VERSION} - {self.console.llm.description()}")
-        print("Type 'gen: <prompt>' to generate code.")
-        print("Type 'pai: <prompt>' to start an agent.")
+        print(f"pai v{VERSION} using {self.console.llm.description()}")
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
 
         generator = self.console.start_generator()
@@ -184,9 +182,7 @@ class REPL:
                     event = next(generator)
                 elif isinstance(event, LLMStreamChunk):
                     if not isinstance(last_event, LLMStreamChunk):
-                        print_formatted_text(
-                            self._gen_prompt(), style=prompt_style, end=""
-                        )
+                        print_formatted_text(self._gen_prompt(), style=prompt_style)
                     print(event.text, end="")
                     last_event = event
                     event = next(generator)
