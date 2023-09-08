@@ -1,7 +1,9 @@
 # pai: It's like having code interpreter in your Python REPL
 A Python REPL with a built in AI agents and code generation. REPL history is used for LLM context. Supports OpenAI and llama.cpp
 
-You and the AI have access to the same data, so you can guide the AI and move seamlessly between the two.
+You and the AI have access to the same REPL history, so you can guide the AI and move seamlessly between the two.
+
+<img src="./assets/graph.gif" />
 
 ## Installation
 ```
