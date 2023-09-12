@@ -15,7 +15,7 @@ from pai.console import (
     ConsoleInput,
     LLMCodeInput,
     NewLLMMessage,
-    NewOuput,
+    NewCodeOuput,
     UserInput,
     WaitingForInputApproval,
     WaitingForInput,
@@ -103,25 +103,20 @@ class REPL:
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
 
         generator = self.console.start_generator()
-        last_event = None
-        event = next(generator)  # Start the generator
 
         if initial_prompt:
-            # if there is an initial prompt, print it and send it to the console
-            # we assume the initial prompt is a prompt, not code. So, we
-            # prepend 'pai: ' to it (if it doesn't already start with 'pai: ').
-
-            if not initial_prompt.startswith("pai: "):
-                initial_prompt = f"pai: {initial_prompt}"
-
             print_formatted_text(self._inp_prompt(), style=prompt_style, end="")
             print(initial_prompt)
-            inp = UserInput(initial_prompt)
-            event = generator.send(inp)
+            generator = self.console.code_gen(initial_prompt)
 
+        event = None
+        last_event = None
         while True:
-            sys.stdout.flush()
             try:
+                last_event = event
+                event = next(generator)  # Start the generator
+
+                sys.stdout.flush()
                 if isinstance(event, WaitingForInput):
                     # get the next str input from the user
                     line: str = self.session.prompt(
@@ -129,9 +124,15 @@ class REPL:
                         prompt_continuation=self._multi_prompt(),
                         style=prompt_style,
                     )
-                    console_inp = UserInput(line)
-                    last_event = event
-                    event = generator.send(console_inp)
+
+                    if line.startswith("pai:"):
+                        line = line[4:].strip()
+                        generator = self.console.code_gen(line, start_agent=True)
+                    elif line.startswith("gen:"):
+                        line = line[4:].strip()
+                        generator = self.console.code_gen(line, start_agent=False)
+                    else:
+                        generator = self.console.handle_input(UserInput(line))
                 elif isinstance(event, WaitingForInputApproval):
                     # The LLM generated code but it hasn't been approved yet
                     # Now we prompt the user with the generated code
@@ -152,9 +153,8 @@ class REPL:
                         raw_resp=llm_code.raw_resp,
                         agent_mode=llm_code.agent_mode,
                     )
-                    last_event = event
-                    event = generator.send(console_inp)
-                elif isinstance(event, NewOuput):
+                    generator = self.console.handle_input(console_inp)
+                elif isinstance(event, NewCodeOuput):
                     # print the general output
                     if event.value:
                         print_formatted_text(
@@ -164,8 +164,6 @@ class REPL:
                         # print a newline if the output doesn't end with one
                         if not event.value.endswith("\n"):
                             print()
-                    last_event = event
-                    event = next(generator)
                 elif isinstance(event, NewLLMMessage):
                     # only print the message if it wasn't just streamed
                     # we can tell by looking at the last event
@@ -178,17 +176,12 @@ class REPL:
                         # print a newline if the output doesn't end with one
                         if not event.value.endswith("\n"):
                             print()
-                    last_event = event
-                    event = next(generator)
                 elif isinstance(event, LLMStreamChunk):
                     if not isinstance(last_event, LLMStreamChunk):
                         print_formatted_text(self._gen_prompt(), style=prompt_style)
                     print(event.text, end="")
-                    last_event = event
-                    event = next(generator)
                 elif isinstance(event, WaitingForLLM):
-                    last_event = event
-                    event = next(generator)
+                    pass
                 else:
                     raise ValueError(f"Unknown input state: {type(event)}")
 
@@ -197,10 +190,7 @@ class REPL:
                 string_error = str(e)
                 if string_error:
                     print(string_error)
-
-                # Reset the generator and continue
                 generator = self.console.start_generator()
-                event = next(generator)  # Start the generator
                 continue
             except EOFError:
                 # Handle Ctrl+D (exit)

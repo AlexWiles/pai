@@ -1,9 +1,4 @@
-import ast
-import code
-import io
-import sys
-from typing import Any, Generator, Literal, Optional
-from uuid import UUID
+from typing import Any, Generator, Optional
 from pydantic.dataclasses import dataclass
 from pai.code_exec import CodeExec
 
@@ -78,7 +73,7 @@ class NewLLMMessage:
 
 
 @dataclass
-class NewOuput:
+class NewCodeOuput:
     """A new output from code execution."""
 
     value: str
@@ -88,12 +83,10 @@ ConsoleEvent = (
     WaitingForInput
     | WaitingForInputApproval
     | WaitingForLLM
-    | NewOuput
+    | NewCodeOuput
     | NewLLMMessage
     | LLMStreamChunk
 )
-
-InputState = WaitingForInput | WaitingForInputApproval
 
 
 class Console:
@@ -116,7 +109,9 @@ class Console:
         locals = {"history": self.history_tree}
         self.console = CodeExec(locals=locals)
 
-    def _code_gen(self, prompt: str) -> Generator[ConsoleEvent, None, InputState]:
+    def code_gen(
+        self, prompt: str, start_agent: bool = False
+    ) -> Generator[ConsoleEvent, None, None]:
         "Handles code gen commands. calls the llm, sets correct input state, updates the history"
         # set the input state to waiting for the LLM and yield it
         yield WaitingForLLM()
@@ -136,7 +131,12 @@ class Console:
             if resp.message:
                 yield NewLLMMessage(resp.message)
 
-            return WaitingForInputApproval(llm_inp)
+            next_state = WaitingForInputApproval(llm_inp)
+            if start_agent:
+                # if agent mode is enabled, that means that we want to immediately
+                # call the LLM again with the result of the previous code
+                next_state.code.agent_mode = True
+            yield next_state
         elif isinstance(resp, LLMResponseMessage):
             new_history_node = HistoryNode.LLMMessage(
                 prompt=resp.prompt,
@@ -156,11 +156,11 @@ class Console:
         else:
             raise ValueError(f"Unknown LLM response type: {type(resp)}")
 
-        return WaitingForInput()
+        yield WaitingForInput()
 
     def handle_input(
         self, console_input: ConsoleInput
-    ) -> Generator[ConsoleEvent, None, InputState]:
+    ) -> Generator[ConsoleEvent, None, None]:
         """
         Yields a console event.
         Returns the next input state.
@@ -174,33 +174,17 @@ class Console:
 
         if isinstance(console_input, UserInput):
             if console_input.code.strip() == "":
-                return WaitingForInput()
-
-            if console_input.code.startswith("gen:"):
-                prompt = console_input.code[4:].strip()
-                next_input_state = yield from self._code_gen(prompt)
-                return next_input_state
-            elif console_input.code.startswith("pai:"):
-                prompt = console_input.code[4:].strip()
-                next_input_state = yield from self._code_gen(prompt)
-                if isinstance(next_input_state, WaitingForInputApproval):
-                    # this is the agent command
-                    # so enable agent mode in the llm code input
-                    # that way when it is passed back to this method
-                    # we can immediately call the llm again after running the code
-                    next_input_state.code.agent_mode = True
-                return next_input_state
-            else:
-                # if the input is not a special command, then run it
-                result = self.console.custom_run_source(console_input.code)
-                yield NewOuput(result)
-                self.history_tree.add_node(
-                    HistoryNode.UserCode(code=console_input.code, result=result)
-                )
-                return WaitingForInput()
+                yield WaitingForInput()
+            # if the input is not a special command, then run it
+            result = self.console.custom_run_source(console_input.code)
+            yield NewCodeOuput(result)
+            self.history_tree.add_node(
+                HistoryNode.UserCode(code=console_input.code, result=result)
+            )
+            yield WaitingForInput()
         elif isinstance(console_input, LLMCodeInput):
             result = self.console.custom_run_source(console_input.code)
-            yield NewOuput(result)
+            yield NewCodeOuput(result)
 
             new_history_node = HistoryNode.LLMCode(
                 prompt=console_input.prompt,
@@ -211,20 +195,12 @@ class Console:
             self.history_tree.add_node(new_history_node)
 
             if console_input.agent_mode:
-                # if agent mode is enabled, that means that we want to immediately
-                # call the LLM again with the result of the previous code
-                next_input_state = yield from self._code_gen("")
-                if isinstance(next_input_state, WaitingForInputApproval):
-                    # TODO: this happens in two places, so it could be refactored
-                    # this is the agent command
-                    # so enable agent mode in the llm code input
-                    # that way when it is passed back to this method
-                    # we can immediately call the llm again after running the code
-                    next_input_state.code.agent_mode = True
-                return next_input_state
+                # if agent mode is enabled, then we want to immediately call the LLM again
+                # and it will generate code based on the result of the previous code
+                yield from self.code_gen("")
             else:
                 # otherwise, just return to waiting for input
-                return WaitingForInput()
+                yield WaitingForInput()
         elif isinstance(console_input, LLMMessageInput):
             new_history_node = HistoryNode.LLMMessage(
                 prompt=console_input.prompt,
@@ -232,7 +208,7 @@ class Console:
                 raw_resp=console_input.raw_resp,
             )
             self.history_tree.add_node(new_history_node)
-            return WaitingForInput()
+            yield WaitingForInput()
         elif isinstance(console_input, LLMErrorInput):
             new_history_node = HistoryNode.LLMError(
                 prompt=console_input.prompt,
@@ -240,7 +216,7 @@ class Console:
                 raw_resp=console_input.raw_resp,
             )
             self.history_tree.add_node(new_history_node)
-            return WaitingForInput()
+            yield WaitingForInput()
         else:
             raise ValueError(f"Unknown input type: {type(console_input)}")
 
@@ -257,10 +233,7 @@ class Console:
 
     def start_generator(self) -> Generator[ConsoleEvent, ConsoleInput, None]:
         # yield the initial waiting for input state
-        input_state = WaitingForInput()
-        while True:
-            user_input: ConsoleInput = yield input_state
-            input_state = yield from self.handle_input(user_input)
+        yield WaitingForInput()
 
 
 def append_new_line(text: str) -> str:
