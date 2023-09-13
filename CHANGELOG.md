@@ -1,3 +1,10 @@
+## Version 0.1.13 - 2023-09-13
+- prompt updates
+- Updated README and modified assets
+- Put code execution in its own module
+- refactor to better separate the repl. Make the console input handling simpler
+- condense the openai prompt, do some refactoring
+
 ## Version 0.1.12 - 2023-09-08
 - Updated README and added assets
 - Readme updates
