@@ -15,7 +15,7 @@ from pai.console import (
     ConsoleInput,
     LLMCodeInput,
     NewLLMMessage,
-    NewCodeOuput,
+    CodeResult,
     UserInput,
     WaitingForInputApproval,
     WaitingForInput,
@@ -102,12 +102,12 @@ class REPL:
         print(f"pai v{VERSION} using {self.console.llm.description()}")
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
 
-        generator = self.console.start_generator()
+        generator = self.console.initial_state_generator()
 
         if initial_prompt:
             print_formatted_text(self._inp_prompt(), style=prompt_style, end="")
             print(initial_prompt)
-            generator = self.console.code_gen(initial_prompt)
+            generator = self.console.code_gen(initial_prompt, agent_mode=True)
 
         event = None
         last_event = None
@@ -127,10 +127,10 @@ class REPL:
 
                     if line.startswith("pai:"):
                         line = line[4:].strip()
-                        generator = self.console.code_gen(line, start_agent=True)
+                        generator = self.console.code_gen(line, agent_mode=True)
                     elif line.startswith("gen:"):
                         line = line[4:].strip()
-                        generator = self.console.code_gen(line, start_agent=False)
+                        generator = self.console.code_gen(line, agent_mode=False)
                     else:
                         generator = self.console.handle_input(UserInput(line))
                 elif isinstance(event, WaitingForInputApproval):
@@ -154,7 +154,7 @@ class REPL:
                         agent_mode=llm_code.agent_mode,
                     )
                     generator = self.console.handle_input(console_inp)
-                elif isinstance(event, NewCodeOuput):
+                elif isinstance(event, CodeResult):
                     # print the general output
                     if event.value:
                         print_formatted_text(
@@ -190,7 +190,7 @@ class REPL:
                 string_error = str(e)
                 if string_error:
                     print(string_error)
-                generator = self.console.start_generator()
+                generator = self.console.initial_state_generator()
                 continue
             except EOFError:
                 # Handle Ctrl+D (exit)
