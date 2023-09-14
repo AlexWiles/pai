@@ -33,13 +33,6 @@ def parse_args():
     )
 
     parser.add_argument(
-        "--ctx-history-count",
-        help="How many history nodes to send to the llm as context. Defaults to all of them.",
-        type=int,
-        default=None,
-    )
-
-    parser.add_argument(
         "--version",
         help="Print the version and exit.",
         action="version",
@@ -64,9 +57,7 @@ def main():
         # openai is the default
         llm = ChatGPT(args.openai)
 
-    console = PaiConsole(llm, llm_context_nodes=args.ctx_history_count)
-    repl = REPL(console)
-    repl.go(args.prompt)
+    REPL(llm, args.prompt)
 
 
 if __name__ == "__main__":

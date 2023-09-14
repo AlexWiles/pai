@@ -3,7 +3,7 @@
 A Python REPL with a built in AI agent and code generation.
 
 ## Features
-- Full Python REPL
+- Full Python REPL usable by both humans and AI
 - AI agent that can generate and run code
 - REPL history is used for LLM context.
 - All code can be edited or cancelled before execution
@@ -25,9 +25,6 @@ The default model is OpenAI GPT-4. You will need to set your OpenAI API key.
 ```
 $ export OPENAI_API_KEY=<your key>
 $ pai
-pai v0.1.12 using gpt-4
-'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.
-INP [0]>
 ```
 
 Specify OpenAI model
@@ -46,13 +43,32 @@ When you invoke `pai`, it will start an interactive Python REPL.
 
 ```
 $ pai
-INP [0]> nums = [1,2,3]
-INP [1]> nums[0]
-OUT [1]> 1
-INP [2]>
+INP [0]> print('howdy')
+OUT [1]> howdy
 ```
 
-Generate code with `gen: <prompt>`. The generated code will be displayed and you can accept, edit or cancel it.
+### Start the agent
+
+Start the agent with `pai: <prompt>`.
+
+This will generate code using the prompt and REPL history. You can accept, edit or cancel the code. Immediately after the generated code is run, the LLM is called again with the new REPL history. This loop continues until the task is complete or you cancel the agent with `Ctrl+C`.
+
+
+```
+INP [0]> pai: list files in the current directory
+LLM [0]>
+import os
+os.listdir()
+
+OK? [0]> import os
+    ...> os.listdir()
+```
+
+
+### One off code generation
+Generate code with `gen: <prompt>`.
+
+The generated code will be displayed and you can accept, edit or cancel it. Unlike the `pai` command, the LLM is not called again after the code is run.
 
 ```
 INP [0]> nums = [1,2,3]
@@ -72,21 +88,8 @@ OUT [1]> 2.0
 INP [2]>
 ```
 
-Start the agent with `pai: <prompt>`. The agent will continuously generate and run code until it completes the task or fails.
-
-```
-INP [0]> pai: pick 2 random wikipedia articles and tell me how they are related
-LLM [0]>
-# Let's use the wikipedia API to fetch random articles
-import requests
-import json
-
-def get_random_wikipedia_articles(count):
-    S = requests.Session()
-    ...
-```
-
-Prompt pai from the command line
+### Quickstart from the command line
+You can prompt pai from the command line
 ```
 $ pai "find the largest file in the current directory"
 ```

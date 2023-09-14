@@ -1,7 +1,5 @@
 import sys
-import threading
-import time
-from typing import Generator, Optional, Tuple
+from typing import Generator, Optional
 
 from prompt_toolkit import HTML, PromptSession, print_formatted_text
 from prompt_toolkit.key_binding import KeyBindings
@@ -11,17 +9,17 @@ from pai.version import VERSION
 
 
 from pai.console import (
+    ConsoleEvent,
     PaiConsole,
-    ConsoleInput,
-    LLMCodeInput,
-    NewLLMMessage,
+    LLMCode,
+    LLMMessage,
     CodeResult,
-    UserInput,
+    UserCode,
     WaitingForInputApproval,
     WaitingForInput,
     WaitingForLLM,
 )
-from pai.llms.llm_protocol import LLMStreamChunk
+from pai.llms.llm_protocol import LLM, LLMStreamChunk
 
 
 # Create a session object
@@ -57,14 +55,9 @@ prompt_style = Style.from_dict(
 
 
 class REPL:
-    console: PaiConsole
     session: PromptSession
-    current_history_index: int
-
-    def __init__(self, console: PaiConsole):
-        self.console = console
-        self.session = PromptSession(key_bindings=key_bindings)
-        self.current_history_index = -1
+    console: PaiConsole
+    generator: Generator[ConsoleEvent, None, None]
 
     def _current_index(self) -> int:
         """Get the current index of the history tree."""
@@ -91,30 +84,33 @@ class REPL:
         ellipsis = "." * (2 + len(str(self._current_index())))
         return HTML(f"<multi>    {ellipsis}> </multi>")
 
-    def _handle_console_input(self, console_inp: ConsoleInput):
-        """Push a line input to the console and print the result."""
-        resp = self.console.handle_input(console_inp)
-        if resp:
-            print_formatted_text(self._out_prompt(), style=prompt_style, end="")
-            print(resp, end="")
+    def _pai(self, prompt: str):
+        self.generator = self.console.streaming_code_gen(prompt, agent_mode=True)
 
-    def go(self, initial_prompt: Optional[str] = None):
+    def _gen(self, prompt: str):
+        self.generator = self.console.streaming_code_gen(prompt, agent_mode=False)
+
+    def __init__(self, llm: LLM, initial_prompt: Optional[str] = None):
+        self.session = PromptSession(key_bindings=key_bindings)
+        self.console = PaiConsole(llm, locals={"pai": self._pai})
+        self.generator = self.console.initial_state_generator()
+
         print(f"pai v{VERSION} using {self.console.llm.description()}")
         print("'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.")
-
-        generator = self.console.initial_state_generator()
 
         if initial_prompt:
             print_formatted_text(self._inp_prompt(), style=prompt_style, end="")
             print(initial_prompt)
-            generator = self.console.code_gen(initial_prompt, agent_mode=True)
+            self.generator = self.console.streaming_code_gen(
+                initial_prompt, agent_mode=True
+            )
 
         event = None
         last_event = None
         while True:
             try:
                 last_event = event
-                event = next(generator)  # Start the generator
+                event = next(self.generator)
 
                 sys.stdout.flush()
                 if isinstance(event, WaitingForInput):
@@ -125,14 +121,19 @@ class REPL:
                         style=prompt_style,
                     )
 
+                    # for convenience, if the user types "pai: <code>" then we start the agent
                     if line.startswith("pai:"):
                         line = line[4:].strip()
-                        generator = self.console.code_gen(line, agent_mode=True)
+                        self.generator = self.console.streaming_code_gen(
+                            line, agent_mode=True
+                        )
                     elif line.startswith("gen:"):
                         line = line[4:].strip()
-                        generator = self.console.code_gen(line, agent_mode=False)
+                        self.generator = self.console.streaming_code_gen(
+                            line, agent_mode=False
+                        )
                     else:
-                        generator = self.console.handle_input(UserInput(line))
+                        self.generator = self.console.streaming_exec(UserCode(line))
                 elif isinstance(event, WaitingForInputApproval):
                     # The LLM generated code but it hasn't been approved yet
                     # Now we prompt the user with the generated code
@@ -146,16 +147,15 @@ class REPL:
                     )
 
                     # push the edited code to the console
-                    console_inp = LLMCodeInput(
+                    console_inp = LLMCode(
                         prompt=llm_code.prompt,
                         message=llm_code.message,
                         code=edited,
                         raw_resp=llm_code.raw_resp,
                         agent_mode=llm_code.agent_mode,
                     )
-                    generator = self.console.handle_input(console_inp)
+                    self.generator = self.console.streaming_exec(console_inp)
                 elif isinstance(event, CodeResult):
-                    # print the general output
                     if event.value:
                         print_formatted_text(
                             self._out_prompt(), style=prompt_style, end=""
@@ -164,7 +164,7 @@ class REPL:
                         # print a newline if the output doesn't end with one
                         if not event.value.endswith("\n"):
                             print()
-                elif isinstance(event, NewLLMMessage):
+                elif isinstance(event, LLMMessage):
                     # only print the message if it wasn't just streamed
                     # we can tell by looking at the last event
                     if not isinstance(last_event, LLMStreamChunk):
@@ -190,7 +190,7 @@ class REPL:
                 string_error = str(e)
                 if string_error:
                     print(string_error)
-                generator = self.console.initial_state_generator()
+                self.generator = self.console.initial_state_generator()
                 continue
             except EOFError:
                 # Handle Ctrl+D (exit)
