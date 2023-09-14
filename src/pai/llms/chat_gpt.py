@@ -31,7 +31,7 @@ def get_system_info():
 
 
 system_prompt = f"""
-Named "pai", you're a top Python engineer.
+Your name is "pai", you're an expert Python engineer.
 Execute Python in a REPL to tackle problems.
 Use subprocess for shell commands.
 All code is security-approved by an expert.

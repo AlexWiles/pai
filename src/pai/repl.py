@@ -11,7 +11,7 @@ from pai.version import VERSION
 
 
 from pai.console import (
-    Console,
+    PaiConsole,
     ConsoleInput,
     LLMCodeInput,
     NewLLMMessage,
@@ -57,11 +57,11 @@ prompt_style = Style.from_dict(
 
 
 class REPL:
-    console: Console
+    console: PaiConsole
     session: PromptSession
     current_history_index: int
 
-    def __init__(self, console: Console):
+    def __init__(self, console: PaiConsole):
         self.console = console
         self.session = PromptSession(key_bindings=key_bindings)
         self.current_history_index = -1

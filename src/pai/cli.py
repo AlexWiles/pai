@@ -1,8 +1,6 @@
 import argparse
-import sys
-import toml
 
-from pai.console import Console
+from pai.console import PaiConsole
 from pai.llms.chat_gpt import ChatGPT
 from pai.llms.fake import FakeLLM
 from pai.llms.llama import LlamaCpp
@@ -66,7 +64,7 @@ def main():
         # openai is the default
         llm = ChatGPT(args.openai)
 
-    console = Console(llm, llm_context_nodes=args.ctx_history_count)
+    console = PaiConsole(llm, llm_context_nodes=args.ctx_history_count)
     repl = REPL(console)
     repl.go(args.prompt)
 

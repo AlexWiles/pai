@@ -89,7 +89,7 @@ ConsoleEvent = (
 )
 
 
-class Console:
+class PaiConsole:
     "Manages the state of the console."
     console: CodeExec
     history_tree: HistoryTree

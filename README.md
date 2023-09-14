@@ -2,11 +2,15 @@
 
 A Python REPL with a built in AI agent and code generation.
 
+## Features
+- Full Python REPL
+- AI agent that can generate and run code
 - REPL history is used for LLM context.
 - All code can be edited or cancelled before execution
 - Runs locally on your machine, so it has full system and internet access
 - Supports OpenAI and llama.cpp
 
+## Demo
 
 <img src="./assets/graph.gif" />
 
@@ -16,6 +20,28 @@ pip install pai-repl
 ```
 
 ## Usage
+
+The default model is OpenAI GPT-4. You will need to set your OpenAI API key.
+```
+$ export OPENAI_API_KEY=<your key>
+$ pai
+pai v0.1.12 using gpt-4
+'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.
+INP [0]>
+```
+
+Specify OpenAI model
+```
+$ pai --openai gpt-3.5-turbo
+```
+
+Alternatively, you can use llama.cpp compatible models
+```
+$ pai --llama <path to model>
+```
+
+## Using the agent
+
 When you invoke `pai`, it will start an interactive Python REPL.
 
 ```
@@ -64,25 +90,3 @@ Prompt pai from the command line
 ```
 $ pai "find the largest file in the current directory"
 ```
-
-## Configuration
-
-The default model is OpenAI GPT-4. You will need to set your OpenAI API key.
-```
-$ export OPENAI_API_KEY=<your key>
-$ pai
-pai v0.1.12 using gpt-4
-'Ctrl+D' to exit. 'Ctrl+o' to insert a newline.
-INP [0]>
-```
-
-Specify OpenAI model
-```
-$ pai --openai gpt-3.5-turbo
-```
-
-Alternatively, you can use llama.cpp compatible models
-```
-$ pai --llama <path to model>
-```
-
