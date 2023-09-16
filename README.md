@@ -1,5 +1,8 @@
 # pai: An AI agent inside your Python REPL
 
+[![PyPI - Version](https://img.shields.io/pypi/v/pai-repl)](https://pypi.org/project/pai-repl/)
+
+
 A Python REPL with a built in AI agent and code generation.
 
 ## Features
