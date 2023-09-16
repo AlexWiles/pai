@@ -1,3 +1,8 @@
+## Version 0.1.14 - 2023-09-16
+- update readme. some cleanup
+- Refactor so pai functions can be called as normal python functions from within the repl.
+- Fix python 3.8 compatibility
+
 ## Version 0.1.13 - 2023-09-13
 - prompt updates
 - Updated README and modified assets
