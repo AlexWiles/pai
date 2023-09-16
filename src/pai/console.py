@@ -1,4 +1,4 @@
-from typing import Any, Generator, Optional
+from typing import Any, Generator, List, Optional, Union
 from pydantic.dataclasses import dataclass
 from pai.code_exec import CodeExec
 
@@ -28,7 +28,7 @@ class LLMCode:
     name: str = "llm-code"
 
 
-ConsoleInput = UserCode | LLMCode
+ConsoleInput = Union[UserCode, LLMCode]
 
 
 @dataclass
@@ -69,14 +69,14 @@ class CodeResult:
     name: str = "code-result"
 
 
-ConsoleEvent = (
-    WaitingForInput
-    | WaitingForInputApproval
-    | WaitingForLLM
-    | CodeResult
-    | LLMMessage
-    | LLMStreamChunk
-)
+ConsoleEvent = Union[
+    WaitingForInput,
+    WaitingForInputApproval,
+    WaitingForLLM,
+    CodeResult,
+    LLMMessage,
+    LLMStreamChunk,
+]
 
 
 class PaiConsole:
@@ -92,7 +92,9 @@ class PaiConsole:
         self.llm = llm
         self.max_history_nodes_for_llm_context = llm_context_nodes
 
-    def code_gen(self, prompt: str, agent_mode: bool = False) -> LLMCode | LLMMessage:
+    def code_gen(
+        self, prompt: str, agent_mode: bool = False
+    ) -> Union[LLMCode, LLMMessage]:
         # get the events from the code gen
         events = [e for e in self.streaming_code_gen(prompt, agent_mode=agent_mode)]
 
@@ -165,7 +167,7 @@ class PaiConsole:
         else:
             raise ValueError(f"Unknown LLM response type: {type(resp)}")
 
-    def exec(self, console_input: ConsoleInput | str):
+    def exec(self, console_input: Union[ConsoleInput, str]):
         last_event = None
 
         # if the input is a string, then convert it to a UserInput
@@ -221,11 +223,11 @@ class PaiConsole:
         else:
             raise ValueError(f"Unknown input type: {type(console_input)}")
 
-    def get_history(self) -> list[HistoryNode]:
+    def get_history(self) -> List[HistoryNode]:
         """Get the history of the console."""
         return self.history_tree.lineage(self.max_history_nodes_for_llm_context)
 
-    def get_history_since(self, idx: int) -> list[HistoryNode]:
+    def get_history_since(self, idx: int) -> List[HistoryNode]:
         return self.history_tree.lineage_since(idx)
 
     def get_prompt(self, prompt: str) -> Any:

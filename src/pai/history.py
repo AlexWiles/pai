@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, List, Optional, Union
 from pydantic.dataclasses import dataclass
 
 
@@ -31,10 +31,10 @@ class HistoryNode:
     class Root:
         pass
 
-    Data = UserCode | LLMCode | LLMMessage | LLMError | Root
+    Data = Union[UserCode, LLMCode, LLMMessage, LLMError, Root]
 
     data: Data
-    children: list["HistoryNode"] = []
+    children: List["HistoryNode"] = []
     parent: Optional["HistoryNode"] = None
     depth: int = 0
 
@@ -79,7 +79,7 @@ class HistoryTree:
         """Get the current node the cursor is pointing to."""
         return self.cursor
 
-    def lineage(self, max_nodes: Optional[int] = None) -> list[HistoryNode]:
+    def lineage(self, max_nodes: Optional[int] = None) -> List[HistoryNode]:
         """Get the lineage of the current node starting from the root."""
         lineage = []
         node = self.cursor
@@ -95,7 +95,7 @@ class HistoryTree:
         lineage.reverse()
         return lineage
 
-    def lineage_since(self, idx: int) -> list[HistoryNode]:
+    def lineage_since(self, idx: int) -> List[HistoryNode]:
         "Get nodes from a specific index to the current node."
         # this can be done more efficiently than pulling the entire lineage
         lineage = self.lineage()

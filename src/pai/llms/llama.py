@@ -1,4 +1,4 @@
-from typing import Any, Generator
+from typing import Any, Generator, List
 from pai.history import HistoryNode
 from pai.llms.llm_protocol import (
     LLM,
@@ -19,7 +19,7 @@ class LlamaCpp(LLM):
     def description(self) -> str:
         return f"llama.cpp: {self.llama.model_path}"
 
-    def prompt(self, history: list[HistoryNode], prompt: str) -> str:
+    def prompt(self, history: List[HistoryNode], prompt: str) -> str:
         full_prompt = """print hello\n```python\nprint("hello")\n```\nout: hello\n"""
 
         # build the messages from the history
@@ -43,7 +43,7 @@ class LlamaCpp(LLM):
         return full_prompt
 
     def call(
-        self, history: list[HistoryNode], prompt: str
+        self, history: List[HistoryNode], prompt: str
     ) -> Generator[LLMStreamChunk, None, LLMResponse]:
         full_prompt = self.prompt(history, prompt)
 

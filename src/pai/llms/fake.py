@@ -1,5 +1,5 @@
 import time
-from typing import Any, Generator
+from typing import Any, Generator, List
 from pai.history import HistoryNode
 from pai.llms.llm_protocol import (
     LLM,
@@ -17,14 +17,14 @@ def chunk_string(s, n):
 
 
 class FakeLLM(LLM):
-    def prompt(self, history: list[HistoryNode], prompt: str) -> Any:
+    def prompt(self, history: List[HistoryNode], prompt: str) -> Any:
         return prompt
 
     def description(self) -> str:
         return "FakeLLM"
 
     def call(
-        self, history: list[HistoryNode], prompt: str
+        self, history: List[HistoryNode], prompt: str
     ) -> Generator[LLMStreamChunk, None, LLMResponse]:
         message = "This code will list the files\nin the current directory. \n```python\nimport os\nos.listdir()\n```\n"
 

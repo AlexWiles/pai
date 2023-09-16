@@ -1,5 +1,5 @@
 import json
-from typing import Any, Generator, Optional
+from typing import Any, Generator, List, Optional
 import openai
 
 from pai.history import HistoryNode
@@ -60,7 +60,7 @@ class ChatGPT(LLM):
 
     def prompt(
         self,
-        history: list[HistoryNode],
+        history: List[HistoryNode],
         prompt: str,
     ) -> Any:
         # build the system prompt using the command history
@@ -137,7 +137,7 @@ class ChatGPT(LLM):
         return messages
 
     def call(
-        self, history: list[HistoryNode], prompt: str
+        self, history: List[HistoryNode], prompt: str
     ) -> Generator[LLMStreamChunk, None, LLMResponse]:
         messages = self.prompt(history, prompt)
 

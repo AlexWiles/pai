@@ -3,10 +3,10 @@
 A Python REPL with a built in AI agent and code generation.
 
 ## Features
-- Full Python REPL usable by both humans and AI
-- AI agent that can generate and run code
+- Full Python REPL
+- Built-in AI agent that can generate and run code in the REPL
 - REPL history is used for LLM context.
-- All code can be edited or cancelled before execution
+- Edit and approve all generated code before it is executed
 - Runs locally on your machine, so it has full system and internet access
 - Supports OpenAI and llama.cpp
 
@@ -37,7 +37,7 @@ Alternatively, you can use llama.cpp compatible models
 $ pai --llama <path to model>
 ```
 
-## Using the agent
+### Starting the REPL
 
 When you invoke `pai`, it will start an interactive Python REPL.
 
