@@ -184,7 +184,6 @@ class PaiConsole:
     ) -> Generator[ConsoleEvent, None, None]:
         """
         Yields console events.
-        Returns the next input state.
 
         There maybe multiple console events that are yielded before the next input state is returned.
         The caller can use the events to update the UI in realtime.

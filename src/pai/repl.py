@@ -56,6 +56,7 @@ prompt_style = Style.from_dict(
 
 class REPL:
     session: PromptSession
+    llm: LLM
     console: PaiConsole
     generator: Generator[ConsoleEvent, None, None]
 
@@ -85,14 +86,26 @@ class REPL:
         return HTML(f"<multi>    {ellipsis}> </multi>")
 
     def _pai(self, prompt: str):
+        """Start the LLM agent. Generate code using the LLM. When that code is executed, the LLM is called again with the new context."""
         self.generator = self.console.streaming_code_gen(prompt, agent_mode=True)
 
     def _gen(self, prompt: str):
+        """Generate code using the LLM."""
         self.generator = self.console.streaming_code_gen(prompt, agent_mode=False)
+
+    def _reset(self):
+        """Reset the console state and history."""
+        self.console = self._new_console(self.llm)
+        self.generator = self.console.initial_state_generator()
+
+    def _new_console(self, llm: LLM) -> PaiConsole:
+        funcs = {"pai": self._pai, "gen": self._gen, "reset": self._reset}
+        return PaiConsole(llm, locals=funcs)
 
     def __init__(self, llm: LLM, initial_prompt: Optional[str] = None):
         self.session = PromptSession(key_bindings=key_bindings)
-        self.console = PaiConsole(llm, locals={"pai": self._pai})
+        self.llm = llm
+        self.console = self._new_console(llm)
         self.generator = self.console.initial_state_generator()
 
         print(f"pai v{VERSION} using {self.console.llm.description()}")
