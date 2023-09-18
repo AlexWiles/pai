@@ -1,3 +1,8 @@
+## Version 0.1.15 - 2023-09-18
+- Add a pypi version badge to README
+- add ability to reset repl state from within the repl
+- make llama-cpp-python an optional dependency
+
 ## Version 0.1.14 - 2023-09-16
 - update readme. some cleanup
 - Refactor so pai functions can be called as normal python functions from within the repl.
