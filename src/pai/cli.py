@@ -3,7 +3,6 @@ import argparse
 from pai.console import PaiConsole
 from pai.llms.chat_gpt import ChatGPT
 from pai.llms.fake import FakeLLM
-from pai.llms.llama import LlamaCpp
 from pai.repl import REPL
 from pai.version import VERSION
 
@@ -50,6 +49,9 @@ def main():
     args = parse_args()
 
     if args.llama_cpp:
+        # llama-cpp-python is an optional dependency so we import it here
+        from pai.llms.llama import LlamaCpp
+
         llm = LlamaCpp(args.llama_cpp)
     elif args.fake_llm:
         llm = FakeLLM()

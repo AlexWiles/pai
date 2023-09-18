@@ -14,7 +14,13 @@ python = "^3.8"
 pydantic = "2.1.1"
 openai = "0.27.8"
 prompt_toolkit = "3.0.39"
-llama-cpp-python = "^0.1.78"
+
+# optional dependencies that require compilation
+llama-cpp-python = { version = "^0.1.78", optional = true }
+
+[tool.poetry.extras]
+llama = ["llama-cpp-python"]
+
 
 [build-system]
 requires = ["poetry-core"]

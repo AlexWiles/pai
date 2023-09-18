@@ -24,6 +24,7 @@ pip install pai-repl
 
 ## Usage
 
+### OpenAI models
 The default model is OpenAI GPT-4. You will need to set your OpenAI API key.
 ```
 $ export OPENAI_API_KEY=<your key>
@@ -35,8 +36,11 @@ Specify OpenAI model
 $ pai --openai gpt-3.5-turbo
 ```
 
-Alternatively, you can use llama.cpp compatible models
+### llama.cpp compatible models
+
+`llama-cpp-python` is an optional dependency because it requires native libraries to be installed so it must be installed using the `llama` extra.
 ```
+$ pip install pai-repl[llama]
 $ pai --llama <path to model>
 ```
 
@@ -89,6 +93,18 @@ OK? [1]> # to find the average of the numbers, we sum all the elements and then
     ...> average_nums
 OUT [1]> 2.0
 INP [2]>
+```
+
+### REPL features
+`reset()` will reset the REPL state and history. This is useful if you want to start a new task or want to start over. No previous history will be used for LLM context.
+```
+INP [0]> a = 1
+INP [1]> reset()
+INP [0]> a
+OUT [0]> Traceback (most recent call last):
+  File "<console>", line 1, in <module>
+NameError: name 'a' is not defined
+INP [1]>
 ```
 
 ### Quickstart from the command line
