@@ -1,5 +1,5 @@
 from typing import Any, List, Optional, Union
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 
 
 class HistoryNode:

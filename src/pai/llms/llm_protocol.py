@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import Any, Generator, List, Optional, Protocol, Union
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 
 from pai.history import HistoryNode
 

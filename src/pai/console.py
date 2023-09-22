@@ -1,5 +1,5 @@
 from typing import Any, Generator, List, Optional, Union
-from pydantic.dataclasses import dataclass
+from dataclasses import dataclass
 from pai.code_exec import CodeExec
 
 from pai.history import HistoryNode, HistoryTree
