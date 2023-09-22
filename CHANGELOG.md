@@ -1,3 +1,7 @@
+## Version 0.1.16 - 2023-09-22
+- cleanup
+- remove pydantic
+
 ## Version 0.1.15 - 2023-09-18
 - Add a pypi version badge to README
 - add ability to reset repl state from within the repl
