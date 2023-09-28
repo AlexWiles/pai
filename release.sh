@@ -28,7 +28,6 @@ fi
 # Format the changes and write to the changelog
 echo -e "## Version $VERSION - $(date +"%Y-%m-%d")\n$CHANGES\n\n$OLD_CONTENT" > CHANGELOG.md
 
-
 # 3. Commit the changes
 git add pyproject.toml CHANGELOG.md src/pai/version.py
 git commit -m "Bump version to $VERSION and update changelog"
@@ -38,6 +37,9 @@ git tag $VERSION
 
 # 5. Push to GitHub (including tags)
 git push origin main --tags
+
+# 6. Create a GitHub Release using GitHub CLI
+gh release create $VERSION --title "Release $VERSION" --notes "$CHANGES"
 
 # 7. Build and Publish to PyPI
 poetry publish --build
