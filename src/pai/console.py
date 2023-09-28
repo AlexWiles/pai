@@ -86,11 +86,22 @@ class PaiConsole:
     llm: LLM
     max_history_nodes_for_llm_context: Optional[int]
 
-    def __init__(self, llm: LLM, llm_context_nodes: Optional[int] = None, locals={}):
+    def __init__(
+        self,
+        llm: LLM,
+        llm_context_nodes: Optional[int] = None,
+        locals={},
+        # code blocks to execute immediately after creating the console
+        initial_code_blocks=[],
+    ):
         self.console = CodeExec(locals=locals)
         self.history_tree = HistoryTree()
         self.llm = llm
         self.max_history_nodes_for_llm_context = llm_context_nodes
+
+        # execute the initial code blocks
+        for block in initial_code_blocks:
+            self.exec(block)
 
     def code_gen(
         self, prompt: str, agent_mode: bool = False

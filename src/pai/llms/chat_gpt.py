@@ -12,45 +12,25 @@ from pai.llms.llm_protocol import (
     LLMStreamChunk,
 )
 
-
-def get_system_info():
-    import os
-    import platform
-
-    system_info = {
-        "system": platform.system(),
-        "node": platform.node(),
-        "release": platform.release(),
-        "version": platform.version(),
-        "machine": platform.machine(),
-        "processor": platform.processor(),
-        "current_directory": os.getcwd(),
-    }
-    system_info_line = ", ".join([f"{k}: {v}" for k, v in system_info.items()])
-    return system_info_line
-
-
-system_prompt = f"""
+DEFAULT_SYS_PROMPT = f"""
 Your name is "pai", you're an expert Python engineer.
 Execute Python in a REPL to tackle problems.
 Use subprocess for shell commands.
 All code is security-approved by an expert.
-Don't hesitate to experiment, but avoid redefining existing entities.
 Users see REPL history.
 Only indicate task completion; if not, assess recent output and proceed.
-Do not repeat content that is already in the REPL history. For example, if a list was printed, tell the user to look at that output
 Approach problems systematically, gather data, segment tasks, and solve with Python.
 Full system and internet access granted.
-
-System info: {get_system_info()}
 """
 
 
 class ChatGPT(LLM):
-    model: str = "gpt-4"
+    model: str
+    sys_prompt: str
 
-    def __init__(self, model: str) -> None:
+    def __init__(self, model: str, sys_prompt: str = DEFAULT_SYS_PROMPT) -> None:
         self.model = model
+        self.sys_prompt = sys_prompt
 
     def agent_support(self) -> bool:
         return True
@@ -63,11 +43,10 @@ class ChatGPT(LLM):
         history: List[HistoryNode],
         prompt: str,
     ) -> Any:
-        # build the system prompt using the command history
         messages = [
             {
                 "role": "system",
-                "content": system_prompt,
+                "content": self.sys_prompt,
             },
         ]
 

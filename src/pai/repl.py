@@ -66,19 +66,19 @@ class REPL:
 
     def _inp_prompt(self) -> HTML:
         """Generate the input prompt."""
-        return HTML(f"<inp>INP [{self._current_index()}]> </inp>")
+        return HTML(f"<inp>INP> </inp>")
 
     def _gen_prompt(self) -> HTML:
         """Generate the code gen prompt."""
-        return HTML(f"<gen>LLM [{self._current_index()}]> </gen>")
+        return HTML(f"<gen>LLM> </gen>")
 
     def _ok_prompt(self) -> HTML:
         """Generate the code gen prompt."""
-        return HTML(f"<gen>OK? [{self._current_index()}]> </gen>")
+        return HTML(f"<gen>OK?> </gen>")
 
     def _out_prompt(self) -> HTML:
         """Generate the output prompt."""
-        return HTML(f"<out>OUT [{self._current_index()}]> </out>")
+        return HTML(f"<out>OUT> </out>")
 
     def _multi_prompt(self) -> HTML:
         """Generate the multi-line prompt."""
@@ -99,8 +99,17 @@ class REPL:
         self.generator = self.console.initial_state_generator()
 
     def _new_console(self, llm: LLM) -> PaiConsole:
+        # Some initial code blocks to execute that tell the LLM about the system
+        initial_code_blocks = [
+            "import os",
+            "import platform",
+            "platform.version()",
+            "platform.machine()",
+            "os.getcwd()",
+        ]
+
         funcs = {"pai": self._pai, "gen": self._gen, "reset": self._reset}
-        return PaiConsole(llm, locals=funcs)
+        return PaiConsole(llm, locals=funcs, initial_code_blocks=initial_code_blocks)
 
     def __init__(self, llm: LLM, initial_prompt: Optional[str] = None):
         self.session = PromptSession(key_bindings=key_bindings)
