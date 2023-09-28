@@ -82,8 +82,7 @@ class REPL:
 
     def _multi_prompt(self) -> HTML:
         """Generate the multi-line prompt."""
-        ellipsis = "." * (2 + len(str(self._current_index())))
-        return HTML(f"<multi>    {ellipsis}> </multi>")
+        return HTML(f"<multi>...> </multi>")
 
     def _pai(self, prompt: str):
         """Start the LLM agent. Generate code using the LLM. When that code is executed, the LLM is called again with the new context."""
