@@ -1,9 +1,13 @@
-# pai: An AI agent inside your Python REPL
+# pai: A Python REPL with a built in AI agent.
+
+It's like OpenAI's Code Interpreter running in your Python REPL.
+
+A fully functional Python REPL with a built in AI agent that can generate and run code using the history as context.
+
 
 [![PyPI - Version](https://img.shields.io/pypi/v/pai-repl)](https://pypi.org/project/pai-repl/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pai-repl)](https://pypi.org/project/pai-repl/)
 
-
-A Python REPL with a built in AI agent and code generation.
 
 ## Features
 - Full Python REPL
@@ -50,8 +54,8 @@ When you invoke `pai`, it will start an interactive Python REPL.
 
 ```
 $ pai
-INP [0]> print('howdy')
-OUT [1]> howdy
+INP> print('howdy')
+OUT> howdy
 ```
 
 ### Start the agent
@@ -62,12 +66,12 @@ This will generate code using the prompt and REPL history. You can accept, edit 
 
 
 ```
-INP [0]> pai: list files in the current directory
-LLM [0]>
+INP> pai: list files in the current directory
+LLM>
 import os
 os.listdir()
 
-OK? [0]> import os
+OK?> import os
     ...> os.listdir()
 ```
 
@@ -78,33 +82,42 @@ Generate code with `gen: <prompt>`.
 The generated code will be displayed and you can accept, edit or cancel it. Unlike the `pai` command, the LLM is not called again after the code is run.
 
 ```
-INP [0]> nums = [1,2,3]
-INP [1]> gen: average nums
-LLM [1]>
+INP> nums = [1,2,3]
+INP> gen: average nums
+LLM>
 # to find the average of the numbers, we sum all the elements and then divide by the number of elements
 
 average_nums = sum(nums) / len(nums)
 average_nums
 
-OK? [1]> # to find the average of the numbers, we sum all the elements and then
+OK?> # to find the average of the numbers, we sum all the elements and then
     ...> divide by the number of elements
     ...>
     ...> average_nums = sum(nums) / len(nums)
     ...> average_nums
-OUT [1]> 2.0
-INP [2]>
+OUT> 2.0
+INP>
 ```
 
 ### REPL features
 `reset()` will reset the REPL state and history. This is useful if you want to start a new task or want to start over. No previous history will be used for LLM context.
 ```
-INP [0]> a = 1
-INP [1]> reset()
-INP [0]> a
-OUT [0]> Traceback (most recent call last):
+INP> a = 1
+INP> reset()
+INP> a
+OUT> Traceback (most recent call last):
   File "<console>", line 1, in <module>
 NameError: name 'a' is not defined
-INP [1]>
+INP>
+```
+
+Run shell commands with `!`
+```
+INP> !ls
+OUT> README.md
+     assets
+     setup.py
+     ...
 ```
 
 ### Quickstart from the command line

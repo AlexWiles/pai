@@ -153,6 +153,10 @@ class REPL:
                         self.generator = self.console.streaming_code_gen(
                             line, agent_mode=False
                         )
+                    elif line.startswith("!"):
+                        line = line[1:].strip()
+                        code = f"""os.system("{line}")"""
+                        self.generator = self.console.streaming_exec(UserCode(code))
                     else:
                         self.generator = self.console.streaming_exec(UserCode(line))
                 elif isinstance(event, WaitingForInputApproval):
