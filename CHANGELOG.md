@@ -1,3 +1,7 @@
+## Version 0.1.18 - 2023-10-01
+- fix multiline indentation
+- Make system calls with a !
+
 ## Version 0.1.17 - 2023-09-28
 - Add an initial code block argument to the console
 - update release script to create github releases
