@@ -164,12 +164,17 @@ class REPL:
                     # Now we prompt the user with the generated code
                     # So they can edit it, approve it, or cancel it
                     llm_code = event.code
+
                     edited: str = self.session.prompt(
                         self._ok_prompt(),
                         default=llm_code.code,
                         prompt_continuation=self._multi_prompt(),
                         style=prompt_style,
                     )
+
+                    # handle ! shell commands by stripping the ! and running the command
+                    if edited.startswith("!"):
+                        edited = f"""os.system("{llm_code.code[1:].strip()}")"""
 
                     # push the edited code to the console
                     console_inp = LLMCode(
