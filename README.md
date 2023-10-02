@@ -19,7 +19,7 @@ A fully functional Python REPL with a built in AI agent that can generate and ru
 
 ## Demo
 
-<img src="./assets/graph.gif" />
+<img src="./assets/example.gif" />
 
 ## Installation
 ```
