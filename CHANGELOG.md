@@ -1,3 +1,7 @@
+## Version 0.1.19 - 2023-10-02
+- update example
+- give llm generated code access to ! commands
+
 ## Version 0.1.18 - 2023-10-01
 - fix multiline indentation
 - Make system calls with a !
